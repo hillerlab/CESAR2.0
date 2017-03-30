@@ -30,32 +30,34 @@ This will output the re-aligned exon, using the default donor/acceptor profile o
 
 
 ## Format of the input file
-The input file has to be a Fasta file. It provides at least one reference and
+The input file has to be a multi-fasta file. It provides at least one reference and
 at least one query sequence. References and queries have to be separated by a
 line starting with '#'. References are the exons (together with their reading frame) that you want to align to the query sequence.
 
 Example alignment of human exon against a mouse query sequence.
 ```
 >human
-acACGTACGTgt
+gCCTGGGAACTTCACCTACCACATCCCTGTCAGTAGTGGCACCCCACTGCACCTCAGCCTGACTCTGCAGATGaa    
 ####
 >mouse
-ACGTACGTACGTACGTACGTACGTACGTACGT
+CCTTTAGGCTTGGCAACTTCACCTACCACATCCCTGTCAGCAGCAGCACACCACTGCACCTCAGCCTGACCCTGCAGATGAAGTGAG
 ```
 
-Example alignment of multiple human exons against multiple mouse queries.
+The reading frame has to be indicated by lower case letters at the beginning and end of the reference exon. Lower case letters are bases belonging to a codon that is split by the intron. In this example, the 'g' is the third codon base and the first full codon is CCT. The 'aa' at the end are the codon bases 2 and 3 of the split codon. 
+
 ```
->human#0
-acACACGTgt
->human#1
-acACGTGTgt
->human#2
-acACGTACGTgt
+>human
+GTCACAATCATTGGTTACACCCTGGGGATTCCTGACGTCATCATGGGGATCACCTTCCTGGCTGCTGGGACCAGCGTGCCTGACTGCATGGCCAGCCTCATTGTGGCCAGACAAg
 ####
->mouse-1
-ACGTACGTACGTACGTACGTACGTACGTACGT
->mouse-2
-ACGTACGTACGTACGTCGTCGTCGTCGTAAAAACGTACGTACGTACGTACGT
+>mouse
+CTCCAAGGTTACCATCATCGGCTACACACTAGGGATCCCTGATGTCATCATGGGGATCACCTTCCTGGCTGCCGGAACCAGCGTGCCAGACTGCATGGCCAGCCTCATTGTAGCCAGACAAGGTGG
+>sheep
+TCCCAGGTCACGATCATCGGCTACACGCTGGGGATTCCTGACGTCATCATGGGGAGACAAGGTGGGGCCCACGTGGGGAGGGCTGGGAAGGGAAGCCAGGCCTCCCTACTTAGGGGGTAGGGGGAGCTTGCCTGG
+```
+
+To use the gene mode of CESAR 2.0, provide an input file that lists multiple consecutive or all exons of a gene. 
+```
+Example
 ```
 
 

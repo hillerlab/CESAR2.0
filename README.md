@@ -89,6 +89,10 @@ If <clade> contains a slash `/` it will be interpreted as look-up directory for 
 
 **Note:** With `-l` and/or `-f`, the profiles will change accordingly.
 
+`-x/--max-memory`
+By default, CESAR2 stops if it is expected to allocate more than 16 GB of RAM.
+With this flag, you can set the maximum RAM allowed for CESAR2.
+The unit for this parameters is gigabytes (GB). E.g. with `-x 32` you tell CESAR2 to allocate up to 32 GB of RAM.
 
 
 ## Special parameters
@@ -116,7 +120,34 @@ separate split codons from full codons with the pipe character `|`.
 
 
 `-s/--set <name1=value1> .. <nameN=valueN>`
-Customize parameters, e.g. transition probabilities. <!--- TODO: List available parameters. -->
+Customize parameters, e.g. transition probabilities. 
+If a set of outgoing transitions includes a customized value, CESAR2 will normalized outgoing probabilities to sum to 1.
+* `fs_prob` probability of a frame shift, default: `0.0001`
+* `ci_prob` codon insertion probability, default: `0.01`
+* `ci2_prob` codon insertion continuation, default: `0.2`
+* `total_cd_prob` sum of deleting 1..10 codons, default: `0.025`
+* `cd_acc` codon deletion at acceptor site, default: `0.012`
+* `cd_do` codon deletion at donor site, default: `0.012`
+* `c3_i1_do`(codon insertion after codon match near donor site, default: `0.01` via ci_prob
+* `i3_i1_do`(codon insertion cont. near donor site, default: `0.4`
+* `i3_i1_acc` codon insertion cont. near acceptor site, default: `0.4`
+* `no_leading_introns_prob` default: `0.5`
+* `no_traling_introns_prob` default: `0.5`
+* `intron_del` probabiltiy to skip acc, intron and do between two exons, default: `0.00001` via fs_prob
+* `b1_bas` skip the acceptor and the intron, default: `0.0001` via fs_prob
+* `b2_bas` skip the acceptor but not the intron: `0.0001` via fs_prob
+* `b2_b2` intron continuation, default: `0.9`
+* `skip_acc` probabilty to skip acceptors, default: `0.0001` via fs_prob
+* `splice_nti` single nucleotide insertion before first codon match, default: `0.0001` via fs_prob
+* `nti_nti` single nucleotide insertion continuation, default: `0.25`
+* `splice_i1` codon insertion before first codon match, default:  `0.01` via ci_prob
+* `i3_i1` codon insertion continuation, default: `0.2` via ci2_prob
+* `c3_i1` codon insertion, default: `0.01` via ci_prob
+* `bsd_e2` skip donor and intron, default: `0.0001` via fs_prob
+* `do2_e2` skip intron at donor site, default:
+* `skip_do` probability to skip donors, default: `0.0001` via fs_prob
+* `e1_e1` intron continuation at donor site, default: `0.9`
+
 
 Use with caution!
 

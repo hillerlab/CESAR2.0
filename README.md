@@ -12,7 +12,7 @@ Just call
 
 `make` 
 
-to build CESAR2.
+to build CESAR 2.0. The binary is called `cesar`. A precompiled linux 64bit binary is precompiledBinary_x86_64/cesar
 
 The code is commented in doxygen style.
 To compile a doxygen documentation of this program at `doc/doxygen/index.html`, call 
@@ -27,6 +27,7 @@ Just call
 `./cesar example/example1.fa`
 
 This will output the re-aligned exon, using the default donor/acceptor profile obtained from human. 
+example2/3/4.fa provide further examples.
 
 
 ## Format of the input file
@@ -34,7 +35,7 @@ The input file has to be a multi-fasta file. It provides at least one reference 
 at least one query sequence. References and queries have to be separated by a
 line starting with '#'. References are the exons (together with their reading frame) that you want to align to the query sequence.
 
-Example alignment of human exon against a mouse query sequence.
+Example 1: Aligning a single exon against a single query sequence.
 ```
 >human
 gCCTGGGAACTTCACCTACCACATCCCTGTCAGTAGTGGCACCCCACTGCACCTCAGCCTGACTCTGCAGATGaa    
@@ -45,6 +46,7 @@ CCTTTAGGCTTGGCAACTTCACCTACCACATCCCTGTCAGCAGCAGCACACCACTGCACCTCAGCCTGACCCTGCAGATG
 
 The reading frame has to be indicated by lower case letters at the beginning and end of the reference exon. Lower case letters are bases belonging to a codon that is split by the intron. In this example, the 'g' is the third codon base and the first full codon is CCT. The 'aa' at the end are the codon bases 2 and 3 of the split codon. 
 
+Example 2: Aligning a single exon against multiple query sequences
 ```
 >human
 GTCACAATCATTGGTTACACCCTGGGGATTCCTGACGTCATCATGGGGATCACCTTCCTGGCTGCTGGGACCAGCGTGCCTGACTGCATGGCCAGCCTCATTGTGGCCAGACAAg
@@ -55,26 +57,33 @@ CTCCAAGGTTACCATCATCGGCTACACACTAGGGATCCCTGATGTCATCATGGGGATCACCTTCCTGGCTGCCGGAACCA
 TCCCAGGTCACGATCATCGGCTACACGCTGGGGATTCCTGACGTCATCATGGGGAGACAAGGTGGGGCCCACGTGGGGAGGGCTGGGAAGGGAAGCCAGGCCTCCCTACTTAGGGGGTAGGGGGAGCTTGCCTGG
 ```
 
-To use the gene mode of CESAR 2.0, provide an input file that lists multiple consecutive or all exons of a gene. 
+Example 3: Gene mode of CESAR 2.0. Provide an input file that lists multiple consecutive or all exons of a gene. By default, CESAR2 assumes that the first given exon is the first coding exon (start codon .. donor), that the last given exon is the last coding exon (acceptor .. stop codon) and that all exons in-between are internal exons (acceptor .. donor). Alternatively, you can specify first/internal/last coding exon by adding the profiles tab-separated after the sequences. If no profiles are specified, CESAR2 outputs a missing profile warning. Reference exons are separated by a line starting with hashes from one or more query sequences.
 ```
-Example
+>exon1	extra/tables/human/firstCodon_profile.txt	extra/tables/human/do_profile.txt
+AGAGCCAAG
+>exon2	extra/tables/human/acc_profile.txt	extra/tables/human/do_profile.txt
+TGGAGGAAGAAGCGAATGCGCag
+>exon3	extra/tables/human/acc_profile.txt	extra/tables/human/lastCodon_profile.txt
+gCTGAAGCGCAAAAGAAGAAAGATGAGGCAGAGGTCCAAGTAA
+####
+>mouse
+GACTCCTGCGCCATGAGAGCGAAGGTGAGCGGCTCTTAGGTGGTGAATCGGGCACCTAGTCCCCGCCATGGTTCCTCTGCGGGCTTCCAGACGGTTTGCCTCGGGTGTTCGCAGTCAGGGAGAGGCTTAAAATTCTTGCTGAAGAAAAGATGGGGTGGGAAAATGAGGGATTCGGCTCTAAAACTGAACCGGTGTCCTTTGTCAAGCCCTGTGTTCTGAGCAGTTTCATGGCCTTGCACAAGCCTGTCTCTAACATTCTTTTTTGTCTCCTCACATGATCGGGTTTTTTTAGTGGCGGAAGAAGAGAATGCGCAGGTACGTTTAATTTTTCAAGACTACCTTGGGGCAGTGGGGGCAAGCTCGGTGTGGGATATTTGGTTGGAAGAAAATATCTGGCGGGAAGGAAGCAGGAGTCGCCGCCCAGTACAGCAGAGCTGGTGCTTGTTAATCTCATCGTCTCTTGTACTCGTGCACTAAGTGTACGTATTGATAGATGTGCAAAGGAAAAAAAAAAAACTCAGGTTTGTGTGCCTTCCATTCCAGGCTGAAGCGCAAGAGAAGAAAGATGAGGCAGAGGTCCAAGTAAGCCAGCCC
 ```
 
 
 ## Parameters
 
 `-f/--firstexon`
-The default profile for start codons is assigned to the acceptor profile of
-the first given exon.
+Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used instead of the acceptor profile.
 
 `-l/--lastexon`
-The default profile for stop codons is assigned to the donor profile of the last given exon.
+Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used instead of the donor profile.
 
 `-m/--matrix <matrix file>`
-Set `<matrix file>` as the path to the substitution matrix.
+Use a different codon substitution matrix by specifying a different file.
 
 `-p/--profiles <acceptor> <donor>`
-Set acceptor and donor profiles to `<acceptor>` resp. `<donor>`.
+Use different acceptor and donor profiles by specifying different profile files.
 
 `-c/--clade <human|mouse>` (default: `human`)
 A shortcut to default sets of substitution matrix and profiles.
@@ -83,7 +92,7 @@ For example, `-c human` is synonymous to:
 
 By default, CESAR2 uses profiles obtained from human.
 You can provide profiles for another species in a directory extra/tables/$species and tell CESAR 2.0 to use these profiles by
-`./cesar --clade $species test/mocks/example1.fa`
+`./cesar --clade $species example1.fa`
 
 If <clade> contains a slash `/` it will be interpreted as look-up directory for profiles.
 

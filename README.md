@@ -71,7 +71,7 @@ GACTCCTGCGCCATGAGAGCGAAGGTGAGCGGCTCTTAGGTGGTGAATCGGGCACCTAGTCCCCGCCATGGTTCCTCTGC
 ```
 
 
-## Parameters
+## Common Parameters
 
 `-f/--firstexon`
 Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used instead of the acceptor profile.
@@ -104,7 +104,7 @@ With this flag, you can set the maximum RAM allowed for CESAR2.
 The unit for this parameters is gigabytes (GB). E.g. with `-x 32` you tell CESAR2 to allocate up to 32 GB of RAM.
 
 
-## Special parameters
+## Expert Parameters
 
 `-v/--verbosity <n>`
 Print extra information to stderr.

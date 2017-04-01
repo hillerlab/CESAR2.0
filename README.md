@@ -156,6 +156,15 @@ If a set of outgoing transitions includes a customized value, CESAR2 will normal
 * `do2_e2` skip intron at donor site, default:
 * `skip_do` probability to skip donors, default: `0.0001` via fs_prob
 * `e1_e1` intron continuation at donor site, default: `0.9`
+**Note:** In the following values, `%s` will be replaced by the clade name
+(e.g. "human"). 
+* `eth_file` substitution matrix file, default: `extra/tables/%s/eth_codon_sub.txt`
+* `acc_profile` default: `extra/tables/%s/acc_profile.txt`
+* `first_codon_profile` default: `extra/tables/%s/firstCodon_profile.txt`
+* `u12_acc_profile` default: `extra/tables/%s/u12_acc_profile.txt`
+* `do_profile` default: `extra/tables/%s/do_profile.txt`
+* `last_codon_profile` default: `extra/tables/%s/lastCodon_profile.txt`
+* `u12_donor_profile` default: `extra/tables/%s/u12_donor_profile.txt`
 
 
 Use with caution!

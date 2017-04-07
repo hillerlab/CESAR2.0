@@ -59,7 +59,6 @@ typedef struct Params {
            fs_logodd,
            ci_logodd,
            ci2_logodd,
-           nti_nti_logodd,
            total_cd_logodd,
            cd_logodd,
 
@@ -69,9 +68,6 @@ typedef struct Params {
            no_leading_introns_logodd,
            no_trailing_introns_logodd,
            intron_del,
-
-           acc2_split,
-           split_do1,
 
            c3_i1_do,
            i3_i1_acc,
@@ -88,14 +84,11 @@ typedef struct Params {
            b1_b2,
            b2_b2,
            b2_acc,
-           acc_acc,
-           acc2_ii,
            skip_acc,
 
            js_scd,
            bsd_do,
            bsd_do_id,
-           do_do,
            do2_e1,
            do2_e2,
            skip_do,
@@ -107,14 +100,10 @@ typedef struct Params {
            nti_nti,
 
            splice_i1,
-           ii1_ii2,
-           i1_i2,
-           i2_i3,
            i3_i1,
            i3_js,
 
            js_c1,
-           c2_c3,
            c3_i1,
            c3_js,
 

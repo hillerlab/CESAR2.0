@@ -68,15 +68,6 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->no_leading_introns_prob = 0.5;
   self->no_trailing_introns_prob = 0.49;
 
-  // transition probabilities that are currently 1.0:
-  self->acc_acc = 0;
-  self->acc2_ii = 0;
-  self->do_do = 0;
-  self->ii1_ii2 = 0;
-  self->i1_i2 = 0;
-  self->i2_i3 = 0;
-  self->c2_c3 = 0;
-
   self->stop_codon_emission_logodd = Logodd__log(0.00019625991262287552);  // based on 1704/8,682,364
 
   long double multiple_cd_factors[] = {
@@ -104,9 +95,8 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->skip_acc = self->fs_logodd;
   self->skip_do = self->fs_logodd;
 
-  self->splice_i1 = self->ci_logodd;
   self->splice_nti = self->fs_logodd;
-  self->nti_nti_logodd = Logodd__log(0.25);
+  self->nti_nti = Logodd__log(0.25);
   self->total_cd_logodd = Logodd__log(0.025);
   
   // factors for splice site
@@ -117,6 +107,8 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->c3_i1 = self->ci_logodd;
   self->c3_i1_do = self->ci_logodd;
   self->i3_i1 = self->ci2_logodd;
+
+  self->splice_i1 = Logodd__log(0.4);
   self->i3_i1_acc = Logodd__log(0.4);
   self->i3_i1_do = Logodd__log(0.4);
 
@@ -124,7 +116,6 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
 
   self->i3_js = Logodd__subexp(0., self->ci2_logodd);
 
-  self->nti_nti = self->nti_nti_logodd;
   self->nti_js = Logodd__subexp(0., self->nti_nti);
 
   self->e1_e1 = Logodd__log(0.9);  // TODO test more thoroughly.
@@ -139,6 +130,8 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->bsd_e2 = self->fs_logodd;
   self->b1_bas = self->fs_logodd;
   self->b2_bas = self->fs_logodd;
+
+  self->intron_del = self->fs_logodd*2;
   return true;
 }
 
@@ -261,7 +254,6 @@ bool Params__recalculate(struct Params* self) {
   self->js_c1 = Logodd__subexp(Logodd__subexp(0, Logodd__sumexp(self->fs_logodd, self->fs_logodd)), self->total_cd_logodd);
   self->bas_sca = Logodd__subexp(0, self->fs_logodd);
 
-  self->nti_nti = self->nti_nti_logodd;
   self->nti_js = Logodd__subexp(0, self->nti_nti);
 
   self->c3_js = Logodd__subexp(Logodd__subexp(0, self->fs_logodd), self->c3_i1);
@@ -339,59 +331,34 @@ bool Params__set_via_str(struct Params* self, char* string, char* value) {
     {"fasta_file",                &self->fasta_file},
     {"dot",                       &self->dot}
   };
-  #define LODD_LENGTH 51
+  #define LODD_LENGTH 26
   const void* LODD_DICT[LODD_LENGTH][2] = {
     {"fs_prob",                   &self->fs_logodd},
     {"ci_prob",                   &self->ci_logodd},
     {"ci2_prob",                  &self->ci2_logodd},
-    {"nti_nti_prob",              &self->nti_nti_logodd},
     {"total_cd_prob",             &self->total_cd_logodd},
     {"cd_acc",                    &self->cd_acc},
     {"cd_do",                     &self->cd_do},
     {"c3_i1_do",                  &self->c3_i1_do},
     {"i3_i1_do",                  &self->i3_i1_do},
     {"i3_i1_acc",                 &self->i3_i1_acc},
-    {"i3_js_do",                  &self->i3_js_do},
-    {"i3_js_acc",                 &self->i3_js_acc},
-    {"stop_codon_emission_prob",  &self->stop_codon_emission_logodd},
     {"no_leading_introns_prob",   &self->no_leading_introns_logodd},
     {"no_traling_introns_prob",   &self->no_trailing_introns_logodd},
     {"intron_del",                &self->intron_del},
-    {"split_do1",                 &self->split_do1},
     {"js_js",                     &self->js_js},
-    {"bas_sca",                   &self->bas_sca},
-    {"bsd_do",                    &self->bsd_do},
     {"b1_bas",                    &self->b1_bas},
     {"b2_bas",                    &self->b2_bas},
-    {"b1_acc",                    &self->b1_acc},
-    {"b1_b2",                     &self->b1_b2},
     {"b2_b2",                     &self->b2_b2},
-    {"b2_acc",                    &self->b2_acc},
-    {"acc_acc",                   &self->acc_acc},
-    {"acc2_ii",                   &self->acc2_ii},
     {"skip_acc",                  &self->skip_acc},
-    {"js_scd",                    &self->js_scd},
-    {"do_do",                     &self->do_do},
-    {"do2_e1",                    &self->do2_e1},
-    {"do2_e2",                    &self->do2_e2},
-    {"skip_do",                   &self->skip_do},
-    {"splice_js",                 &self->splice_js},
     {"splice_nti",                &self->splice_nti},
-    {"nti_js",                    &self->nti_js},
     {"nti_nti",                   &self->nti_nti},
     {"splice_i1",                 &self->splice_i1},
-    {"ii1_ii2",                   &self->ii1_ii2},
-    {"i1_i2",                     &self->i1_i2},
-    {"i2_i3",                     &self->i2_i3},
     {"i3_i1",                     &self->i3_i1},
-    {"i3_js",                     &self->i3_js},
-    {"js_c1",                     &self->js_c1},
-    {"c2_c3",                     &self->c2_c3},
     {"c3_i1",                     &self->c3_i1},
-    {"c3_js",                     &self->c3_js},
     {"bsd_e2",                    &self->bsd_e2},
-    {"e1_e1",                     &self->e1_e1},
-    {"e1_e2",                     &self->e1_e2},
+    {"do2_e2",                    &self->do2_e2},
+    {"skip_do",                   &self->skip_do},
+    {"e1_e1",                     &self->e1_e1}
   };
 #define UINT_LENGTH 3
   const void* UINT_DICT[UINT_LENGTH][2] = {

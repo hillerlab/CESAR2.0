@@ -7,39 +7,44 @@ use strict;
 use warnings;
 use Scalar::Util::Numeric qw(isint);
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev);
-
-use lib "$ENV{'cesarTools'}";
+# this perl module must be located in the same dir as this script
+use FindBin qw($Bin);
+use lib "$Bin/";
 use geneAnnotationFunctions;
 
 # input options/parameters:
 my $verbose = 0;
-GetOptions ("v|verbose" => \$verbose);
+my $maxMem = 30;
+GetOptions ("v|verbose" => \$verbose, "maxMemory=i" => \$maxMem	);
+
 
 my $usage = "wrongs # args\n $0 - The core annotation engine that runs CESAR2.0 on a given genePred file and outputs 
 coordinates of intact exons in a bed format.
 
 Mandatory positional arguments:
 1) transript identifier
-2) the path to the indexed maf
-3) the genepred file which contains information about all transcripts
+2) the indexed alignment (.bb) file
+3) the genepred file which contains information about all transcripts (output of formatGenePred.pl)
 4) reference species --> for example: hg38
 5) speciesList --> a comma separated string of species whose exons are being annotated. For example mm10,bosTau7 for mouse and cow
 6) output directory --> a file with the same name as the query species is generated in this directory and coordinates of all intact exons are appended to this file
+7) the twoBit directory that contains the genomes of the reference and all query species
+8) the path to the CESAR binary. This path is expected to contain the extra/ subdirectory that contains donor and acceptor profiles and the substitution matrix
 
 Options:
   -v|verbose
+  -maxMemory int    allow CESAR 2.0 to allocate at most that much memory in Gb. Default is 30 (Gb). 
 ";
 
-die $usage if (scalar(@ARGV) < 6);
-die "ERROR: directory specified in environment variable twoBitDir (set to $ENV{'twoBitDir'}) does not exist. Please set the environment variable to the correct directory.\n" if (! -d $ENV{'twoBitDir'});
-die "ERROR: directory specified in environment variable cesarTools (set to $ENV{'cesarTools'}) does not exist. Please set the environment variable to the correct directory.\n" if (! -d $ENV{'cesarTools'});
-
+die $usage if (scalar(@ARGV) < 8);
 my $gene        = $ARGV[0];
 my $mafIndex    = $ARGV[1];
 my $genePred    = $ARGV[2];
 my $reference   = $ARGV[3];
 my $speciesList = $ARGV[4];
 my $outDir      = $ARGV[5];
+my $twoBitDir   = $ARGV[6];
+my $cesarDir    = $ARGV[7];
 
 ## Check arguments
 die "The mafIndex file '$mafIndex' does not exist\n" if (! -e $mafIndex);
@@ -53,10 +58,10 @@ my %speciesOfInterest = map{$_ => 1}@speciesArray;
 ## Step0: check if two bit files are present for all species of interest
 foreach my $species(@speciesArray)
 {
-	my $twoBitFile = "$ENV{'twoBitDir'}/$species/$species.2bit";
+	my $twoBitFile = "$twoBitDir/$species/$species.2bit";
 	die "The two bit file ('$twoBitFile') for species '$species' is not present. Aborting\n" if (! -e $twoBitFile);
 }
-my $twoBitFileRef = "$ENV{'twoBitDir'}/$reference/$reference.2bit";
+my $twoBitFileRef = "$twoBitDir/$reference/$reference.2bit";
 
 ## Step1: Get the information about the gene from the genePred file
 my $strandRef = my $chrRef = my $allExons = "";
@@ -215,7 +220,7 @@ my %seqHash = my %headerHash = (); ## A 2 dimensional hash where the first dimen
 
 foreach my $species(@speciesArray) {
 	
-	my $twoBitFile = "$ENV{'twoBitDir'}/$species/$species.2bit";
+	my $twoBitFile = "$twoBitDir/$species/$species.2bit";
 	my %ntsAtEitherEnd = ();
 	open(FO,">$speciesBed") || die "Error writing to speciesBed file '$speciesBed' for species '$species'\n";
 	
@@ -327,7 +332,6 @@ foreach my $species(@speciesArray) {
 }
 
 ## Now run CESAR exon-wise by using the sequences stored in seqHash
-my $cesarPath   = $ENV{'cesarTools'};
 my $cesarInput  = `mktemp /dev/shm/cesarIn.fa.XXXXXX`; chomp $cesarInput;
 my $cesarOutput = `mktemp /dev/shm/cesarOut.aln.XXXXXX`; chomp $cesarOutput;
 push(@tempFiles,$cesarInput,$cesarOutput);
@@ -363,12 +367,12 @@ while($k <= $noe) {
 	$doProfile = "extra/tables/$clade/u12_donor_profile.txt" if (exists $referenceSpliceSites{$k}{"do"} eq "AT");
 	$accProfile = "extra/tables/$clade/u12_acceptor_profile.txt" if (exists $referenceSpliceSites{$k}{"acc"} eq "AC");
 	
-	$doProfile  = "$cesarPath/$doProfile";
-	$accProfile = "$cesarPath/$accProfile";
-	my $matrix = "$cesarPath/extra/tables/human/eth_codon_sub.txt";	
+	$doProfile  = "$cesarDir/$doProfile";
+	$accProfile = "$cesarDir/$accProfile";
+	my $matrix = "$cesarDir/extra/tables/human/eth_codon_sub.txt";	
 
 	## runCESAR
-	my $cesarCall = "$cesarPath/cesar $cesarInput --matrix $matrix -p $accProfile $doProfile --max-memory 30 > $cesarOutput";
+	my $cesarCall = "$cesarDir/cesar $cesarInput --matrix $matrix -p $accProfile $doProfile --max-memory $maxMem > $cesarOutput";
 	system($cesarCall) == 0 || die "Error running cesar on exon, '$cesarCall' failed\n";
 	
 	## Split the alignment into pairwise alignments and check if the exon is intact for each species
@@ -727,7 +731,7 @@ sub getChromSize  ## This function returns the chromosome size for a given speci
 {
 	my ($species,$chrInterest) = @_;
 	
-	my $chromSizeFile = "$ENV{'twoBitDir'}/$species/chrom.sizes";
+	my $chromSizeFile = "$twoBitDir/$species/chrom.sizes";
 	my $chrSize = "";
 	
 	open(FICS,"$chromSizeFile") || die "Error opening chromosomes size file '$chromSizeFile' in getChromSize function\n";

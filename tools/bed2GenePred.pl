@@ -9,23 +9,28 @@ use warnings;
 my $usage = "wrongs # args\n $0 - Convert CESAR2.0 annotated exons (as elements in a bed file) to a genePred file
 
 Mandatory positional arguments:
-1) input bed file
-2) output genePred file
+1) species
+2) name of CESAR 2.0 output directory (containing the exon coordinates)
+3) output genePred file
 ";
 
 $| = 1;		# == fflush(stdout)
-die $usage if (scalar(@ARGV) != 2);
+die $usage if (scalar(@ARGV) != 3);
 
-my $bedFile  = $ARGV[0];
-my $genePred = $ARGV[1];
+my $species  = $ARGV[0];
+my $dir      = $ARGV[1];
+my $genePred = $ARGV[2];
 
 ####
 my %accListHash = my %hashFromFile = ();
-## Read the input file and convert it to a 2 dimensional hash, the first dimension is the accession, the second is just a number, the value is the line.
-my $i = 0;
-open(FI,$bedFile) || die "Error opening input file '$bedFile'\n";
-while (my $line = <FI>)
-{
+## Collect all exons of that species and convert it to a 2 dimensional hash, the first dimension is the accession, the second is just a number, the value is the line.
+my $call = "find $dir -type f -path '*/${species}/*' -exec cat {} \\;";
+print "executing  '$call'  ...\n";
+my @results = `$call`;
+die "ERROR: $call failed\n" if ($? != 0 || ${^CHILD_ERROR_NATIVE} != 0);
+print "gives ", $#results+1, " exons\n";
+for (my $i = 0; $i<=$#results; $i++) {
+	my $line = $results[$i];	
 	$line =~s/\s+$//;
 	my $accExon = (split /\t/,$line)[4];
 	my @tmp = split(/_/,$accExon);
@@ -36,14 +41,15 @@ while (my $line = <FI>)
 	$hashFromFile{$acc}{$i} = $line;
 	$i++;
 }
-close FI;
-
 my @accListAll = keys(%accListHash);
 
 my $tmpBed     = `mktemp /dev/shm/XXXXX.bed`; chomp $tmpBed;
 my $tmpBedFile = `mktemp /dev/shm/XXXXX.bed`; chomp $tmpBedFile;
 my $tmpFileB2L = `mktemp /dev/shm/XXXXX.bed`; chomp $tmpFileB2L;
 
+# create output dir
+$call = "mkdir -p `dirname $genePred`";
+`$call`;
 open(FO,">$genePred") || die "Error printing to the genePred file 'genePred'\n";
 foreach my $acc(@accListAll)
 {
@@ -162,6 +168,7 @@ foreach my $acc(@accListAll)
 }
 close FO;
 `rm $tmpBed $tmpBedFile $tmpFileB2L`;
+print "Results for $species are in $genePred\n";
 
 ### Sub-routines
 

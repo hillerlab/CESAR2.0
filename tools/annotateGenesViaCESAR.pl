@@ -332,6 +332,13 @@ my $cesarInput  = `mktemp /dev/shm/cesarIn.fa.XXXXXX`; chomp $cesarInput;
 my $cesarOutput = `mktemp /dev/shm/cesarOut.aln.XXXXXX`; chomp $cesarOutput;
 push(@tempFiles,$cesarInput,$cesarOutput);
 
+# create the output dir for all species and remove a potentially existing output file
+foreach my $species(@speciesArray) {
+	my $createDirCall = "mkdir -p $outDir/$chrRef/$species";
+	system($createDirCall) == 0 || die "Error: '$createDirCall' failed\n";
+	system("rm -f $outDir/$chrRef/$species/$gene");
+}
+
 my %bedDirHash = ();
 my $k = 1;
 while($k <= $noe) {
@@ -381,9 +388,7 @@ while($k <= $noe) {
 			print "Alignment for exon $k. gene '$gene'\n$refSequence\n$querySequence\n####\n" if ($verbose);
 			
 			# create output subdirectory
-			my $createDirCall = "mkdir -p $outDir/$chrRef/$species";
-			system($createDirCall) == 0 || die "Error: '$createDirCall' failed\n";
-			open(FOS,">$outDir/$chrRef/$species/$gene") || die "Error: cannot write to $outDir/$chrRef/$species/$gene file\n";
+			open(FOS,">>$outDir/$chrRef/$species/$gene") || die "Error: cannot write to $outDir/$chrRef/$species/$gene file\n";
 			my $accRef = $referenceSpliceSites{$k}{"acc"};
 			my $doRef  = $referenceSpliceSites{$k}{"do"};
 		

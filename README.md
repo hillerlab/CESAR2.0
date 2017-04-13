@@ -56,7 +56,9 @@ chmod +x jobList
 # This will run over night (10.5 h on a single core)
 
 # Convert results into genePred format
-for species in `echo $querySpecies | sed 's/,/ /g'`; do echo "bed2GenePred.pl $species $resultsDir/$species.gp" ; done > jobListGenePred
+for species in `echo $querySpecies | sed 's/,/ /g'`; do 
+  echo "bed2GenePred.pl $species $outputDir $resultsDir/$species.gp"
+done > jobListGenePred
 chmod +x jobListGenePred
 ./jobListGenePred
 # This will take ~10 minutes

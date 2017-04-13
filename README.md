@@ -61,7 +61,7 @@ for species in `echo $querySpecies | sed 's/,/ /g'`; do
 done > jobListGenePred
 chmod +x jobListGenePred
 ./jobListGenePred
-# This will take ~10 minutes
+# This will take ~15 minutes
 
 # cleanup
 rm -rf $outputDir

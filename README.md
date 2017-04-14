@@ -19,6 +19,127 @@ To compile a doxygen documentation of this program at `doc/doxygen/index.html`, 
 
 `make doc` 
 
+
+# Example of annotating genes in several genomes
+
+This example illustrates the usage of CESAR 2.0 to annotate human genes in 4 vertebrate genomes (mouse, aardvark, chicken, falcon). A generalized workflow is below. 
+
+```
+# test directory
+mkdir CESARTest; cd CESARTest
+# get code and data
+git clone https://github.com/hillerlab/CESAR2.0/
+wget -r -nH --cut-dirs=2 --reject "index.html*" https://bds.mpi-cbg.de/hillerlab/CESAR2.0_Example .
+
+# define a few environment variables (see below for details)
+export inputGenes=ensGene.gp
+export reference=hg38
+export twoBitDir=2bitDir
+export alignment=multiz_5way.bb
+export querySpecies=mm10,oryAfe1,galGal4,falChe1
+export outputDir=CESARoutput
+export resultsDir=geneAnnotation
+# this will set the maxMemory to the amount of RAM in your machine - 1 Gb
+export maxMemory=`grep MemTotal /proc/meminfo | awk '{print int($2/1000000)-1}'`
+export cesarTools=./CESAR2.0/tools
+PATH=$PATH:$cesarTools
+
+# create all CESAR jobs
+formatGenePred.pl ${inputGenes} ${inputGenes}.forCESAR ${inputGenes}.discardedTranscripts -longest
+for transcript in `cut -f1 ${inputGenes}.forCESAR`; do 
+   echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${cesarTools} -maxMemory ${maxMemory}"
+done > jobList
+
+# realign all genes by executing the jobList or push it to your compute cluster
+chmod +x jobList
+./jobList
+# This will run over night (10.5 h on a single core)
+
+# Convert results into genePred format
+for species in `echo $querySpecies | sed 's/,/ /g'`; do 
+  echo "bed2GenePred.pl $species $outputDir $resultsDir/$species.gp"
+done > jobListGenePred
+chmod +x jobListGenePred
+./jobListGenePred
+# This will take ~15 minutes
+
+# cleanup
+rm -rf $outputDir
+```
+The results are in geneAnnotation/ as one file for each of the 4 query species in genePred file. 
+
+# General workflow of annotating genes in several genomes
+
+## Input data
+* a file containing coding genes annotated in the reference genome in UCSC's [genePred format](https://genome.ucsc.edu/FAQ/FAQformat.html#format9). 
+The UCSC genome browser provides gene annotations in genePred format for many species. Alternatively, the tools bedToGenePred or gff3ToGenePred can be used to create genePred from bed or gff format. Use UCSC's genePredCheck to check if your input file is valid. 
+* a "2bit" directory that contains the genomes of the reference and all query species. 
+Each species must have a subdirectory that is identical to the assembly name (e.g. hg38 for human, mm10 for mouse). In this subdirectory, you must have the genome sequence in [2bit format](https://genome.ucsc.edu/goldenpath/help/twoBit.html) and a file called 'chrom.sizes' that contains the size of all scaffolds. This file can be produced by 'twoBitInfo $assembly.2bit chrom.sizes'. 
+* a genome alignment in [maf format](https://genome.ucsc.edu/FAQ/FAQformat.html#format5). Index this maf file by running 'mafIndex $alignment.maf $alignment.bb' to create the index in bigBed format.
+
+See the test case above for examples of all input files. 
+
+## Simple Four Step Workflow
+### Step 1: Define variables
+```
+export inputGenes=...   # the genePred file containing the genes in the reference
+export reference=...    # the assembly name of the reference
+export twoBitDir=...    # the directory containing the genomes and chrom.size files. 
+export alignment=...    # the alignment index file
+export querySpecies=... # a comma-separated list of the query species that you want to annotate. Each query species must be contained in ${alignment}.
+export outputDir=...    # name of CESAR2.0 output directory that will contain exon coordinates (in subdirectories). The directory will be created, if it does not exist. 
+export resultsDir=...   # directory containing the final gene annotation (one genePred file per species)
+export maxMemory=...    # maximum amount of memory in Gb that CESAR 2.0 can allocate. With 30 Gb, all but 3 human genes succeed. With 50 Gb, all human genes succeed. 
+export cesarTools=...   # path to the tools directory. This must contain the 'cesar' binary and the 'extra' subdirectory containing CESAR's profiles and matrices
+export PATH=$PATH:$cesarTools
+```
+It is recommended to add the last export command to your .bashrc.
+
+### Step 2: 
+Create the input file for CESAR 2.0 from the genePred gene annotation file by running
+```
+formatGenePred.pl ${inputGenes} ${inputGenes}.forCESAR ${inputGenes}.discardedTranscripts
+```
+
+By default, this step will consider all protein-coding transcripts of each gene. If you only want to consider the longest transcript per gene (instead of all transcripts), use the '-longest' parameter:
+```
+formatGenePred.pl ${inputGenes} ${inputGenes}.forCESAR ${inputGenes}.discardedTranscripts -longest
+```
+
+This step produces an output file that has the coordinates of all coding exons. It discard transcripts with (i) incomplete CDS on either the 3’ or the 5’ end, (ii) with a CDS length that is not a multiple of 3 (e.g. due to programmed frameshift or polymorphisms), and (iii) transcripts with micro introns smaller than 30 bp as such introns are often introduced to sidestep a frameshift. All discarded transcripts are listed in ${inputGenes}.discardedTranscripts.
+
+### Step 3:
+Generate the CESAR 2.0 commands for all transcripts by running:
+```
+for transcript in `cut -f1 ${inputGenes}.forCESAR`; do 
+  echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${cesarTools} -maxMemory ${maxMemory}"
+done > jobList
+```
+
+This creates for every transcript a realignment job for CESAR 2.0. Each line in jobList consists of a single job. Each job is completely independent of any other job, thus each job can be run in parallel to others. 
+
+Execute that jobList file. Either sequentially by doing 
+```
+chmod +x jobList
+./jobList
+```
+or run it in parallel by using a compute cluster. 
+
+### Step 4: 
+After each realignment job succeeded, collect the results as a single genePred file for each query species by running: 
+```
+for species in `echo $querySpecies | sed 's/,/ /g'`; do 
+  echo "bed2GenePred.pl $species $outputDir $resultsDir/$species.gp"
+done > jobListGenePred
+chmod +x jobListGenePred
+./jobListGenePred
+```
+
+The final results are in $resultsDir as a single file per query species in genePred format. 
+
+Remove $outputDir if you like. 
+
+
 # Running CESAR 2.0 directly
 ## Minimal example
 
@@ -174,9 +295,10 @@ Use with caution!
 Print the version and exit.
 
 
-# References
-CESAR 2.0 was implemented by Peter Schwede (MPI-CBG/MPI-PKS 2017).
+# Credits
+CESAR 2.0 was implemented by Peter Schwede (MPI-CBG/MPI-PKS 2017). Virag Sharma (MPI-CBG/MPI-PKS 2017) implemented the workflow to annotate genes in several genomes.
 
+# References
 [1] Sharma V, Schwede P, and Hiller M. CESAR 2.0 substantially improves speed and accuracy of comparative gene annotation. Submitted
 
 [2] Sharma V, Elghafari A, and Hiller M. [Coding Exon-Structure Aware Realigner (CESAR) utilizes genome alignments for accurate comparative gene annotation](https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkw210). Nucleic Acids Res., 44(11), e103, 2016

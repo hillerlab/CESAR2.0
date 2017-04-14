@@ -39,7 +39,6 @@ for (my $i = 0; $i<=$#results; $i++) {
 	my $acc = join("_",@tmp);
 	$accListHash{$acc} = "T";
 	$hashFromFile{$acc}{$i} = $line;
-	$i++;
 }
 my @accListAll = keys(%accListHash);
 

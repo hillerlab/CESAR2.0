@@ -30,6 +30,7 @@ mkdir CESARTest; cd CESARTest
 # get code and data
 git clone https://github.com/hillerlab/CESAR2.0/
 wget -r -nH --cut-dirs=2 --reject "index.html*" https://bds.mpi-cbg.de/hillerlab/CESAR2.0_Example .
+gzip -d multiz_5way.maf.gz
 
 # define a few environment variables (see below for details)
 export inputGenes=ensGene.gp

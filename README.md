@@ -145,7 +145,7 @@ Remove $outputDir if you like.
 
 Just call
 
-`./cesar example/example1.fa`
+`./cesar extra/example1.fa`
 
 This will output the re-aligned exon, using the default donor/acceptor profile obtained from human. 
 example2/3/4.fa provide further examples.

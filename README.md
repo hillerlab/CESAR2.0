@@ -23,6 +23,8 @@ To compile a doxygen documentation of this program at `doc/doxygen/index.html`, 
 ```
 # get code 
 git clone https://github.com/hillerlab/CESAR2.0/
+cd CESAR2.0/
+make
 # this directory contains the mini example input data
 cd extra/miniExample
 
@@ -47,6 +49,11 @@ This example illustrates the usage of CESAR 2.0 to annotate human genes in 4 ver
 mkdir CESARTest; cd CESARTest
 # get code and data
 git clone https://github.com/hillerlab/CESAR2.0/
+cd CESAR2.0/
+make
+cd ..
+
+# download the data (7 GB in total)
 wget -r -nH --cut-dirs=2 --reject "index.html*" https://bds.mpi-cbg.de/hillerlab/CESAR2.0_Example .
 gzip -d multiz_5way.maf.gz
 

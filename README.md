@@ -24,6 +24,7 @@ To compile a doxygen documentation of this program at `doc/doxygen/index.html`, 
 # get code 
 git clone https://github.com/hillerlab/CESAR2.0/
 cd CESAR2.0/
+export PATH=$PATH:`pwd`/tools
 make
 # this directory contains the mini example input data
 cd extra/miniExample

@@ -142,12 +142,9 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
       } else if (!strncmp("split_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
-      } else if (!strncmp("match_codon", path[i]->name, 11)) {
+      } else if (!strncmp("start_codon", path[i]->name, 11) || !strncmp("stop_codon", path[i]->name, 10) || !strncmp("match_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]);
-      } else if (!strncmp("match_split", path[i]->name, 11)) {
-        self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
-        self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
       } else if (!strncmp("match", path[i]->name, 5)) {  // donor, acceptor
         self->reference[t+j] = ' ';
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
@@ -195,6 +192,25 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         self->query[t+j] = '-';
       }
     }
+
+    //  between_acc_split -> between_match_ins
+    if (!strncmp("between_acc_split", path[i-1]->name, 17) &&
+        !strncmp("between_match_ins", path[i]->name, 17)) {
+      for (; j < 3; j++) {
+        self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        self->query[t+j] = '-';
+      }
+    }
+
+    // end_codon -> between_split_donor
+    if (!strncmp("end_codon", path[i-1]->name, 9) &&
+        !strncmp("between_match_donor", path[i]->name, 19)) {
+      for (; j < 3; j++) {
+        self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        self->query[t+j] = '-';
+      }
+    }
+
     if (i > 0 && !strncmp("between_split_donor", path[i]->name, 19) &&
         !strncmp("end_codon", path[i-1]->name, 9) && path[i-1]->custom ==
         fasta->references[reference_id]->num_codons-1) {
@@ -217,9 +233,10 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
       char bases[4] = "";
       Literal__str(path[i]->num_emissions, path[i]->reference, bases);
       for (; j < 3*deleted_codons; j++) {
-        if (r >= fasta->references[reference_id]->length && reference_id < fasta->num_references+1) {
+        if (r >= fasta->references[reference_id]->length && reference_id <= fasta->num_references) {
           r = 0;
           reference_id++;
+          logv(3, "next reference: %u", reference_id)
         }
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r]);
         self->query[t+j] = '-';

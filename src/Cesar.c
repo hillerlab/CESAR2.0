@@ -26,7 +26,7 @@ char g_loglevel = LOGLEVEL;
  * The main program.
  */
 int main(int argc, char* argv[argc]) {
-  struct EmissionTable emission_tables[6];
+  struct EmissionTable emission_tables[8];
 
   struct Params parameters;
   Params__create(&parameters, emission_tables);
@@ -112,7 +112,7 @@ int main(int argc, char* argv[argc]) {
     logv(1, "Query %u length: %lu", i, fasta.queries[i]->length);
     qlength += fasta.queries[i]->length;
   }
-  float mem = 7e-9*(rlength*qlength + 4*rlength);  // in GB. Factor of 17 bytes is taken from measurements.
+  float mem = 7e-9*(rlength*qlength + 4*rlength);  // in GB. Factor 7e-9 is taken from measurements.
   if (mem > (float)parameters.max_memory) {
     die("The memory consumption is limited to %u GB by default. Your attempt requires %u GB. You can change the limit via --max-memory.", parameters.max_memory, (uint8_t)mem);
   } else {

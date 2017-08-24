@@ -37,7 +37,9 @@ typedef struct Params {
     * emission_table_4_UNIFORM,
     * emission_table_61_UNIFORM,
     * emission_table_61_LAMBDA,
-    * emission_table_64_LAMBDA;
+    * emission_table_64_LAMBDA,
+    * emission_table_start_LAMBDA,
+    * emission_table_stop_LAMBDA;
 
   bool dirty;
 
@@ -51,8 +53,12 @@ typedef struct Params {
           split_emissions_donor,
           max_memory;
 
-  Literal* stop_codons;
+  uint8_t num_start_codons;
+  Literal* start_codons;
+
   uint8_t num_stop_codons;
+  Literal* stop_codons;
+
   bool multiexon, lastexon, firstexon, forcelong;
 
   LOGODD_T stop_codon_emission_logodd,

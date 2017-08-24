@@ -7,7 +7,7 @@
 #include "State.h"
 #include "HMM.h"
 
-struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm, size_t num_observations);
+struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm);
 
 struct PathMatrix* Viterbi__init_path_matrix(struct HMM* hmm, size_t num_observations);
 

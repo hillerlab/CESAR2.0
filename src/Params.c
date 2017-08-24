@@ -20,6 +20,12 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->lastexon = false;
   self->max_memory = MEMORYLIMIT;
 
+  self->num_start_codons = 1;
+  self->start_codons = (Literal*) SAFEMALLOC(sizeof(Literal) * 3 * self->num_start_codons);
+  self->start_codons[0] = LITERAL_A;
+  self->start_codons[1] = LITERAL_T;
+  self->start_codons[2] = LITERAL_G;
+
   self->num_stop_codons = 3;
   self->stop_codons = (Literal*) SAFEMALLOC(sizeof(Literal) * 3 * self->num_stop_codons);
   self->stop_codons[0] = LITERAL_T;
@@ -43,6 +49,11 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->emission_table_64_LAMBDA = &emission_tables[3];
   self->emission_table_61_LAMBDA = &emission_tables[4];
   self->emission_table_61_UNIFORM = &emission_tables[5];
+  self->emission_table_start_LAMBDA = &emission_tables[6];
+  self->emission_table_stop_LAMBDA = &emission_tables[7];
+
+  EmissionTable__init_single_codons(self->emission_table_start_LAMBDA, self->num_start_codons, self->start_codons);
+  EmissionTable__init_single_codons(self->emission_table_stop_LAMBDA, self->num_stop_codons, self->stop_codons);
 
   //strncpy(self->matrices_path_prefix, "CESAR/matrices", PATH_STRING_LENGTH-100);
   strncpy(self->dot, "\0", PATH_STRING_LENGTH-1);
@@ -57,7 +68,7 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   strncpy(self->last_codon_profile, "extra/tables/%s/lastCodon_profile.txt", PATH_STRING_LENGTH-1);
   strncpy(self->u12_acc_profile, "extra/tables/%s/u12_acc_profile.txt", PATH_STRING_LENGTH-1);
   strncpy(self->u12_donor_profile, "extra/tables/%s/u12_donor_profile.txt", PATH_STRING_LENGTH-1);
-    
+
   EmissionTable__init(self->emission_table_4_UNIFORM,  1, UNIFORM_DISTRIBUTION);
   EmissionTable__init(self->emission_table_16_UNIFORM, 2, UNIFORM_DISTRIBUTION);
   EmissionTable__init(self->emission_table_64_UNIFORM, 3, UNIFORM_DISTRIBUTION);
@@ -301,7 +312,7 @@ bool Params__recalculate(struct Params* self) {
   Params__make_insert_table(self, self->emission_table_61_LAMBDA);
 
   if (g_loglevel > 3) {
-    FILE* matrix_log = fopen("cesar_matrix.log", "a");
+    FILE* matrix_log = fopen("cesar_matrix.2.log", "w");
     char tmp[1024000] = "";
     EmissionTable__str(self->emission_table_64_LAMBDA, tmp);
     fprintf(matrix_log, "64Lambda:\n%s", tmp);
@@ -311,6 +322,10 @@ bool Params__recalculate(struct Params* self) {
     fprintf(matrix_log, "64Uniform:\n%s", tmp);
     EmissionTable__str(self->emission_table_61_UNIFORM, tmp);
     fprintf(matrix_log, "61Uniform:\n%s", tmp);
+    EmissionTable__str(self->emission_table_start_LAMBDA, tmp);
+    fprintf(matrix_log, "startcodon:\n%s", tmp);
+    EmissionTable__str(self->emission_table_stop_LAMBDA, tmp);
+    fprintf(matrix_log, "stopcodon:\n%s", tmp);
     fclose(matrix_log);
   }
 

@@ -25,7 +25,7 @@
  * @param hmm pointer to hidden markov model
  * @param num_observations query length
  */
-struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm, size_t num_observations) {
+struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm) {
 	LOGODD_T default_value = LOGODD_NEGINF;
 
   struct LogoddMatrix* vmatrix = LogoddMatrix__create(4, hmm->num_states, default_value);  // 4 = 3 previous + 1 current
@@ -256,7 +256,7 @@ void Viterbi(struct HMM* hmm, size_t num_observations, Literal* observations, si
   logv(1, "Num observations:\t%lu", num_observations);
 
   // The init of a dynamically sized 2d array requires >=c99
-  struct LogoddMatrix* vmatrix = Viterbi__init_logodd_matrix(hmm, num_observations);
+  struct LogoddMatrix* vmatrix = Viterbi__init_logodd_matrix(hmm);
   struct PathMatrix* pmatrix = Viterbi__init_path_matrix(hmm, num_observations);
 
   // init the first column: the initial states.

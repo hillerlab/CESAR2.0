@@ -11,13 +11,10 @@ our @EXPORT = qw(checkExonIntactness getIntronTable getSLineData);
 my @stopCodonsList = qw(TAA TAG TGA);
 my %stopCodons = map{$_ => 1}@stopCodonsList;
 
-sub checkExonIntactness
-{
+sub checkExonIntactness {
 	my($refSequence,$querySequence,$header,$refStrand,$gene,$exonN,$phaseString,$accRef,$donorRef,$noe,$verbose) = @_;
 
-
-	#die "Undefined value for strand '$refStrand'\n" if ($refStrand ne "+" && $refStrand ne "-");
-	
+	die "Undefined value for strand '$refStrand'\n" if ($refStrand ne "+" && $refStrand ne "-");
 
 	my $querySequenceFull = $querySequence;
 	my($alignmentStart,$alignmentStop) = getAlignmentBoundaries($refSequence,$verbose);
@@ -67,12 +64,12 @@ sub checkExonIntactness
 	my @refSeqArray = split("",$refSequence);
 	my @querySeqArray = split("",$querySequence);
 	
-	my $fsCount              = getFrameshifts($refSequence,$querySequence,$codonPosHash_Ref,$codonPosHash_Query,\@querySeqArray,$verbose);
-	my $stopCodonCount       = getInframeStopCodons($refSequence,$querySequence,$codonPosHash_Ref,$verbose);
-	my $spliceSiteMutations  = getSpliceSiteMutations($querySequenceFull,$alignmentStart,$alignmentStop,$accRef,$donorRef,$exonN,$noe,$verbose);
+	my ($fsCount,$insertWithStop)    = getFrameshifts($refSequence,$querySequence,$codonPosHash_Ref,$codonPosHash_Query,\@querySeqArray,$verbose);
+	my $stopCodonCount               = getInframeStopCodons($refSequence,$querySequence,$codonPosHash_Ref,$verbose);
+	my $spliceSiteMutations          = getSpliceSiteMutations($querySequenceFull,$alignmentStart,$alignmentStop,$accRef,$donorRef,$exonN,$noe,$verbose);
 					
 	my $exonCDS = "";
-	if ($fsCount == 0 && $stopCodonCount == 0 && $spliceSiteMutations == 0) {
+	if ($fsCount == 0 && $insertWithStop == 0 && $stopCodonCount == 0 && $spliceSiteMutations == 0) {
 		$exonCDS = getCoordinatesOfIntactExon($header,$alignmentStart,$alignmentStop,$gene,$exonN,$noe,$lengthAlignment,$querySequenceFull,$refStrand);
 	} else {
 		$exonCDS = "NI";
@@ -82,8 +79,7 @@ sub checkExonIntactness
 }
 
 ## Different sub-routines
-sub getFrameshifts
-{
+sub getFrameshifts {
 	my($refSequence,$querySequence,$codonPosHash_Ref,$codonPosHash_Query,$ref2QueryArray,$verbose) = @_;
 	my $insertions = getIndels($refSequence);
 	my $deletions  = getIndels($querySequence);
@@ -91,20 +87,31 @@ sub getFrameshifts
 	my %insertionsHash = %$insertions;
 	my %deletionsHash  = %$deletions;
 	
-	my $fsCount = 0;
+	my $fsCount = my $insertWithStop = 0;
 	my %allFrameshiftsHash = ();  ## create a hash and only look at those indels that cause a frameshift
-	foreach my $insert(keys(%insertionsHash))
-	{
+	
+	foreach my $insert(keys(%insertionsHash)) {
 		my $insertLength = $insertionsHash{$insert};
 		if ($insertLength%3 != 0) {
 			$fsCount++; 	
 			$allFrameshiftsHash{$insert} = $insertLength;
 			print "Insertion --> Happens at position '$insert', the value is '$insertLength'\n" if ($verbose);
+		} else {  ## check if a frame-preserving indel has an in-frame stop codon
+			my $seqInsert = substr($querySequence,$insert,$insertLength);
+			
+			my $i = 0;
+			while ($i < length($seqInsert)) {
+				my $codon = substr($seqInsert,$i,3);
+				if (exists $stopCodons{$codon}) {
+					print "The framepreserving insertion contains the stop codon '$codon' is present in the sequence '$seqInsert' at position '$i'\n" if ($verbose);
+					$insertWithStop++;
+				}
+				$i = $i + 3;
+			}
 		}
 	}
 	
-	foreach my $deletion(keys(%deletionsHash))
-	{
+	foreach my $deletion(keys(%deletionsHash)) {
 		my $deletionLength = $deletionsHash{$deletion};
 		if($deletionLength%3 != 0) {
 			$fsCount++;
@@ -122,12 +129,10 @@ sub getFrameshifts
 		my %excludedDeletions = ();
 		
 		my $ref2CompensatedEvents = getCompensatedEvents(\%allFrameshiftsHash,\%excludedInsertions,\%excludedDeletions,$codonPosHash_Ref,$codonPosHash_Query,$ref2QueryArray,$verbose);
-		## $ref2allFrameshifts,$ref2ExcludedInsertions,$ref2ExcludedDeletions,$verbose,$codonPosHash_Ref,$codonPosHash_Query
 		my %compensatedEvents = %$ref2CompensatedEvents;
 		my %ignoreCompensatedFS = ();
 		
-		foreach my $keys(keys(%compensatedEvents))
-		{
+		foreach my $keys(keys(%compensatedEvents)) {
 			my @compFSEvents = split(",",$compensatedEvents{$keys});
 			push(@compFSEvents,$keys);
 			my %compEventsHashLocal = map{$_ => 1}@compFSEvents;
@@ -135,19 +140,17 @@ sub getFrameshifts
 		}
 		
 		my @allFrameshifts_NonCompensated = ();
-		foreach my $fs(@allFrameshifts)
-		{
+		foreach my $fs(@allFrameshifts) {
 			push(@allFrameshifts_NonCompensated,$fs) if (! exists $ignoreCompensatedFS{$fs});
 		}
 		$fsCount = scalar(@allFrameshifts_NonCompensated);
 	}
 	
-	return $fsCount;
+	return ($fsCount,$insertWithStop);
 }
 
 ## Get insertions and deletions in the sequence
-sub getIndels ## Insertions are gaps in the reference sequence, deletions are gaps in the query sequence
-{
+sub getIndels { ## Insertions are gaps in the reference sequence, deletions are gaps in the query sequence
 	my $sequence = shift;
 	my @seqArray = split(/[A-Z]/,$sequence);
 	@seqArray = grep{$_ ne ""}@seqArray;
@@ -155,8 +158,7 @@ sub getIndels ## Insertions are gaps in the reference sequence, deletions are ga
 	my %hashIndel = ();
 	my $posStart = 0;
 	## Get positions of gaps
-	foreach my $element(@seqArray)
-	{	
+	foreach my $element(@seqArray) {	
 		my $pos = index($sequence,$element,$posStart);
 		my $lengthIndel = length($element);
 		$hashIndel{$pos} = $lengthIndel;
@@ -166,8 +168,7 @@ sub getIndels ## Insertions are gaps in the reference sequence, deletions are ga
 	return \%hashIndel;
 }
 
-sub getCodonPosHash
-{
+sub getCodonPosHash {
 	my $sequence = shift;
 	my %codonPosHash = ();
 	
@@ -175,9 +176,8 @@ sub getCodonPosHash
 	my $ct = 0;
 	my $baseUngapped = 0;
 	
-	foreach my $base(@seqArray)
-	{
-		if ($base ne "-"){
+	foreach my $base(@seqArray) {
+		if ($base ne "-") {
 			$baseUngapped++;
 			my $codonPos = $baseUngapped%3;
 			$codonPos = 3 if ($codonPos == 0);
@@ -190,8 +190,7 @@ sub getCodonPosHash
 	return \%codonPosHash;
 }
 
-sub getCompensatedEvents
-{
+sub getCompensatedEvents {
 	my ($ref2allFrameshifts,$ref2ExcludedInsertions,$ref2ExcludedDeletions,$codonPosHash_Ref,$codonPosHash_Query,$ref2QueryArray,$verbose) = @_;		### 
 	
 	my %fdEvents = %$ref2allFrameshifts;
@@ -203,8 +202,7 @@ sub getCompensatedEvents
 	my %compensationHash = ();		### This is the hash that contains all the events which can be compensated, the key is the first event, the value is the event (or events) which can compensate the first event.
 	my %excludeEvents = ();			### Any event which can compensate for another event is dumped into this hash, so that it is not considered again.
 
-	for (my $i = 0;$i < @indelsAll;$i++)
-	{
+	for (my $i = 0;$i < @indelsAll;$i++) {
 		my $queryEvent = $indelsAll[$i];	## this is the query, now find events which can compensate for this query event.
 		next if (exists $excludeEvents{$queryEvent});
 		
@@ -214,8 +212,8 @@ sub getCompensatedEvents
 		my $sumLengthsPCE = $length;
 		my @potCompEventList = ();
 		
-		for (my $j = $i + 1;$j < @indelsAll;$j++)	## Now start looking for compensatory events. Remember if the index of the query 
-		{											## event is i, the compensatory events should be search from i+1
+		for (my $j = $i + 1;$j < @indelsAll;$j++) {	## Now start looking for compensatory events. Remember if the index of the query 
+													## event is i, the compensatory events should be search from i+1
 			my $potCompEvent = $indelsAll[$j];
 			my $lengthPCE = $fdEvents{$potCompEvent};
 			next if (exists $excludeEvents{$potCompEvent}); 		## the potential compensatory event should not have been "consumed" in compensating for some other event.
@@ -259,11 +257,10 @@ sub getCompensatedEvents
 					## otherwise continue to look for compensatory events
 		}			## End of the FOR loop that looks for compensatory events
 					## IF statement which checks that the queryEvent has not already been "consumed"/ it is a compensatory event for some other upstream event.
-	}					## End of the FOR loop that iterates through the list of all Indels.
+	}				## End of the FOR loop that iterates through the list of all Indels.
 	
 	### Perform the "Return To Ancestral Reading Frame Test"
-	foreach my $events( sort {$a <=> $b} keys(%compensationHash))
-	{	
+	foreach my $events( sort {$a <=> $b} keys(%compensationHash)) {	
 		## Get eventStop position, or the position of the last of the compensatory events. Remember, compensatory events could be a list of events
 		my @tmpCompEvents = split(",",$compensationHash{$events});
 		my $stop = $tmpCompEvents[$#tmpCompEvents];
@@ -280,8 +277,7 @@ sub getCompensatedEvents
 		my $stopPos = $stop + $length -1;	## stop position is where the last of the compensatory events happen + the length of the event - 1
 		my $readingFrameRF = "";
 		
-		while ($start <= $stopPos)
-		{
+		while ($start <= $stopPos) {
 			if (! exists $excludedInsertions{$start}) {
 				### Reading frame for the reference species
 				$readingFrameRF = $codonPosHash_Ref->{$start} if ($codonPosHash_Ref->{$start} ne "-");   ## ## Keep getting the reading frame of the Reference species for every line where there is sequence in the Reference
@@ -303,13 +299,11 @@ sub getCompensatedEvents
 }
 
 
-sub getAncestralReadingFrame
-{
+sub getAncestralReadingFrame {
 	my ($startUpstream,$codonPosHash_Ref) = @_;
 	my $speciesRF = "";
 	
-	while ($startUpstream >= 0)		## This is the index in the GeneArray from where I ancestralize the reading frame of the species i.e. a positon just upstream of the indel
-	{
+	while ($startUpstream >= 0) {		## This is the index in the GeneArray from where I ancestralize the reading frame of the species i.e. a positon just upstream of the indel
 		my $codonPos = $codonPosHash_Ref->{$startUpstream};
 		
 		if  ($codonPos ne "-") {		## Get the line where there is a character in the Reference species. Remember we need 
@@ -323,8 +317,7 @@ sub getAncestralReadingFrame
 	return $speciesRF;
 }
 
-sub checkForStopCodons					
-{										
+sub checkForStopCodons {									
 	my ($start,$stop,$ref2ExcludedInsertions,$ref2ExcludedDeletions,$readingFrame,$ref2QueryArray,$verbose) = @_;
 	
 	my %excludedInsertions = %$ref2ExcludedInsertions;
@@ -334,8 +327,7 @@ sub checkForStopCodons
 	my $flagStop = my $geneSeq = "";
 	print "Extracting gene sequence between '$start' and '$stop'\n" if ($verbose);
 	
-	for(my $k = $start;$k < $stop; $k++)
-	{
+	for(my $k = $start;$k < $stop; $k++) {
 		if (! exists $excludedInsertions{$k}) {
 			$geneSeq = $geneSeq.$querySeqArray[$k];
 			$geneSeq = $geneSeq."N" if (exists $excludedDeletions{$k});
@@ -363,8 +355,7 @@ sub checkForStopCodons
 	return $flagStop;
 }
 
-sub find_stop_codon
-{
+sub find_stop_codon {
 	my ($seq,$verbose) = @_;;
 	
 	my $rem = (length($seq)%3);
@@ -377,8 +368,7 @@ sub find_stop_codon
 	die "The length of the input sequence '$seq' is not divisible by 3\n" if (length($seq)%3 != 0);
 	my $i = 0;
 	my $stopCodonPresent = "";
-	while ($i < length($seq))
-	{
+	while ($i < length($seq)) {
 		my $codon = substr($seq,$i,3);
 		if (exists $stopCodons{$codon}) {
 			print "FRAMESHIFT THAT CANNOT BE COMPENSATED!!! The stop codon '$codon' is present in the sequence '$seq' at position '$i'\n" if ($verbose);
@@ -390,17 +380,17 @@ sub find_stop_codon
 	return $stopCodonPresent;
 }
 
-sub getInframeStopCodons
-{
-	my($querySequence,$refSequence,$codonPosHash_Ref,$verbose) = @_;
+sub getInframeStopCodons {
+	my($refSequence,$querySequence,$codonPosHash_Ref,$verbose) = @_;
 	my $stopCodonCount = 0;
 	my $i = 0;
 	print "####\nInformation for stop codons:\n\n" if ($verbose);
-	while ($i < length($querySequence))
-	{
+	while ($i < length($querySequence)) {
 		my $codon = substr($querySequence,$i,3);
 		my $codonRef = substr($refSequence,$i,3);
-		if (exists $stopCodons{$codon} && ! exists $stopCodons{$codonRef}) { ## Stop codon in query but not in reference. Otherwise it is not a mutation but could be a conserved stop. For example conserved selenocysteine.
+		
+		if (exists $stopCodons{$codon} && ! exists $stopCodons{$codonRef}) { ## Stop codon in query but not in reference. Otherwise it is not a mutation but most likely a stop codon at the end of the gene
+			
 			my $string = $codonPosHash_Ref->{$i}.$codonPosHash_Ref->{$i+1}.$codonPosHash_Ref->{$i+2};
 			if($string eq "123") {
 				print "STOP CODON found at position '$i'. The codon in the reference sequence is '$codonRef', the stop codon in query is '$codon'\n" if ($verbose);
@@ -412,17 +402,15 @@ sub getInframeStopCodons
 	return $stopCodonCount;
 }
 
-sub getAlignmentBoundaries
-{
+sub getAlignmentBoundaries {
 	my ($refSequence,$verbose) = @_;
 	$refSequence =~s/\s+$//;
 	my @seqArray = split("",$refSequence);
 	
 	my $stop  = length($refSequence);
 	my $start = 0;
-	foreach my $base(@seqArray)
-	{
-		if($base ne " ") {
+	foreach my $base(@seqArray) {
+		if ($base ne " ") {
 			last;
 		}
 		$start++;
@@ -431,8 +419,7 @@ sub getAlignmentBoundaries
 	return ($start,$stop);
 }
 
-sub getSpliceSiteMutations
-{
+sub getSpliceSiteMutations {
 	my($alignedQuery,$alignmentStart,$alignmentStop,$accRef,$donorRef,$exonN,$noe,$verbose) = @_;
 	my $accQuery    = substr($alignedQuery,$alignmentStart-2,2);
 	my $donorQuery  = substr($alignedQuery,$alignmentStop,2);
@@ -447,8 +434,7 @@ sub getSpliceSiteMutations
 	return $spliceSiteMutationCount;
 }
 
-sub getCoordinatesOfIntactExon
-{		
+sub getCoordinatesOfIntactExon {	
 	my($header,$alignmentStart,$alignmentStop,$gene,$exonN,$noe,$lengthAlignment,$querySequenceFull,$strandRef) = @_;
 	
 	## This is how the header looks like panTro4#20600346#20600543#chr15#-
@@ -462,23 +448,12 @@ sub getCoordinatesOfIntactExon
 	
 	my $strandQueryPrint = "+";
 	$strandQueryPrint = "-" if ($strandRef ne $strandQuery);
-
-	## Adjust coordinates for the first and the last exon
-	if ($strandQueryPrint eq "+") {
-		$exonStart = $exonStart - 3 if ($exonN == 1);
-		$exonEnd   = $exonEnd + 3 if ($exonN == $noe);
-	} else {
-		$exonEnd     = $exonEnd + 3 if ($exonN == 1);
-		$exonStart   = $exonStart - 3 if ($exonN == $noe);
-	}
 	
-
 	my $bedLine = "$chr\t$exonStart\t$exonEnd\t$strandQueryPrint\t$exonN";
 	return $bedLine;
 }
 
-sub getIntronTable
-{
+sub getIntronTable {
 	my($gene,$refChr,$refStrand,$ref2ExonsList,$ref2SpeciesList,$ref2HashInfo,$verbose) = @_;
 	
 	my @speciesListArray = @$ref2SpeciesList;
@@ -488,8 +463,7 @@ sub getIntronTable
 
 	@exonsList = reverse(@exonsList) if ($refStrand eq "-");
 	
-	foreach my $species(@speciesListArray)
-	{
+	foreach my $species(@speciesListArray) {
 		$species =~s/\s+$//;
 		
 		## Make pairs for exons that should be compared: This is important because we could have an alignment to exon1, e-lines for exon2 and an alignment to exon3. 
@@ -497,14 +471,12 @@ sub getIntronTable
 		my @pairsList = ();
 		my $j = "";
 		
-		for (my $i = 0; $i < scalar(@exonsList)-1; $i++)
-		{
+		for (my $i = 0; $i < scalar(@exonsList)-1; $i++) {
 			my $e1 = $i;
 			my $e2 = $i + 1;
 			
 			my $exon1 = $exonsList[$e1];
 			my $exon2 = $exonsList[$e2];
-		
 			print "Checking the possibility of exonPair --> '$e1' and '$e2' i.e. '$exon1 and '$exon2'\n" if ($verbose);
 		
 			my($cds1,$chr1,$strand1,$l1) = (split /#/,$hashInfo{$species}{$i});
@@ -516,7 +488,7 @@ sub getIntronTable
 			my($cds2,$chr2,$strand2,$l2) = (split /#/,$hashInfo{$species}{$i+1});
 			my $pair = "";
 		
-			if ($chr1 ne "NA" && $strand1 ne "NA" && $chr1 eq $chr2 && $strand1 eq $strand2){
+			if ($chr1 ne "NA" && $strand1 ne "NA" && $chr1 eq $chr2 && $strand1 eq $strand2) {
 				$pair = "$e1-$e2"; 
 				print "Possible pair $e1 and $e2 will be evaluated. Chr/strands are '$chr1', '$strand1', '$chr2' and '$strand2'\n\n" if ($verbose);
 			} else {
@@ -525,11 +497,10 @@ sub getIntronTable
 				my $jStart = $j;
 			
 				print "Scenario2: Evaluating the possibility of '$j' and downstream exons\n\n" if ($verbose);
-				if ($j < scalar(@exonsList)){
-					for($j = $jStart; $j < scalar(@exonsList); $j++)
-					{
+				if ($j < scalar(@exonsList)) {
+					for($j = $jStart; $j < scalar(@exonsList); $j++) {
 						my($cds2,$chr2,$strand2,$l2) = (split /#/,$hashInfo{$species}{$j});
-						if ($chr1 ne "NA" && $strand1 ne "NA" && $chr1 eq $chr2 && $strand1 eq $strand2){
+						if ($chr1 ne "NA" && $strand1 ne "NA" && $chr1 eq $chr2 && $strand1 eq $strand2) {
 							$pair = "$e1-$j";
 							print "This is the new pair '$pair'\n\n" if ($verbose);
 							$i = $j;
@@ -548,11 +519,9 @@ sub getIntronTable
 			## Ensure that the list becomes continuous i.e, 0-5,5-6,6-12,12-18,18-35 and so on
 
 			my @pairsListNew = ();
-			for(my $k = 0; $k < (scalar(@pairsList)-1); $k++)
-			{
+			for(my $k = 0; $k < (scalar(@pairsList)-1); $k++) {
 				push(@pairsListNew,$pairsList[$k]);  ## i.e. the original pair
 				my ($startOriginal,$stopOriginal) = (split /-/,$pairsList[$k])[0,1];
-				
 				
 				my($chrOriginal,$strandOriginal) = (split /#/,$hashInfo{$species}{$startOriginal})[1,2];
 				
@@ -575,12 +544,10 @@ sub getIntronTable
 			########
 			@pairsList = @pairsListNew;
 			print "These are the continuous exonPairs '@pairsList'\n" if ($verbose);
-
 			my @list = ();
 
 			## Now compare adjacent exons from the pairs that I have created above
-			for (my $i = 0; $i < scalar(@pairsList); $i++)
-			{
+			for (my $i = 0; $i < scalar(@pairsList); $i++) {
 				my($e1,$e2) = (split /-/,$pairsList[$i]);
 				
 				my $exon1 = $exonsList[$e1];
@@ -597,8 +564,7 @@ sub getIntronTable
 			@list = reverse(@list) if ($refStrand eq "-");
 
 			### Formatting the output
-			foreach my $element(@list)
-			{
+			foreach my $element(@list) {
 				my $e1 = my $e2 = my $length = "";
 				
 				if ($refStrand eq "+") {
@@ -673,7 +639,7 @@ sub getSLineData {
 #		print "s line: ($blockNo, $species, $chr, $start, $size, $strand, $srcSize, $seq)  [[$line]]\n" if ($verbose);
 
 		return ($species, $chr, $start, $size, $strand, $srcSize, $seq);
-	}else{
+	} else {
 		die "ERROR: call getSLineData with no s line: $line\n";
 	}
 }

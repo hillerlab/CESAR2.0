@@ -61,12 +61,13 @@ bool forward_deletions(struct HMM* hmm, struct Params* params, size_t num_codons
         break;
       }
       if (i == 0) {
-        State__add_incoming(codons[i], params->multiple_cd_factors[j] + params->cd_acc, codons[i+j+2]);
         logv(5, "cd_acc: %e	from: %lu  to: %lu", Logodd__exp(params->multiple_cd_factors[j]+params->cd_acc), i, i+j+2);
+        State__add_incoming(codons[i], params->multiple_cd_factors[j] + params->cd_acc, codons[i+j+2]);
       } else if (num_codons == i+j+2) {
-        State__add_incoming(codons[i], params->multiple_cd_factors[j] + params->cd_do, codons[i+j+2]);
         logv(5, "cd_do: %e	from: %lu  to: %lu", Logodd__exp(params->multiple_cd_factors[j]+params->cd_do), i, i+j+2);
+        State__add_incoming(codons[i], params->multiple_cd_factors[j] + params->cd_do, codons[i+j+2]);
       } else {
+        logv(5, "cd_do: %e	from: %lu  to: %lu", Logodd__exp(params->multiple_cd_factors[j] * Logodd__exp(params->cd_logodd)), i, i+j+2);
         State__add_incoming(codons[i], Logodd__log(params->multiple_cd_factors[j] * Logodd__exp(params->cd_logodd)), codons[i+j+2]);
       }
     }
@@ -81,15 +82,15 @@ bool match_codon(struct HMM* hmm, Params* params, size_t index, Literal codon[3]
   char codon_str[4] = "";
   Literal__str(3, codon, codon_str);
 
-  /*
-  for (uint8_t i=0; i < params->num_stop_codons; i++) {
-    if (codon[0] == params->stop_codons[i*3] &&
-        codon[0+1] == params->stop_codons[i*3+1] &&
-        codon[0+2] == params->stop_codons[i*3+2]) {
-      die("Reference contains full stop codon %s: Codon %lu", codon_str, index);
+  if (!last) {
+    for (uint8_t i=0; i < params->num_stop_codons; i++) {
+      if (codon[0] == params->stop_codons[i*3] &&
+          codon[0+1] == params->stop_codons[i*3+1] &&
+          codon[0+2] == params->stop_codons[i*3+2]) {
+        die("Reference contains full stop codon %s: Codon %lu", codon_str, index);
+      }
     }
   }
-  */
 
   // match_curr_codon
   struct State* match_codon = HMM__new_state(hmm);
@@ -100,6 +101,7 @@ bool match_codon(struct HMM* hmm, Params* params, size_t index, Literal codon[3]
   struct State* next_cluster = HMM__new_state(hmm);
 
   State__init(match_codon, "match_codon", 3, codon, params->emission_table_64_LAMBDA);
+  logv(4, "Match: %c%c%c", Literal__char(codon[0]), Literal__char(codon[1]), Literal__char(codon[2]));
   match_codon->custom = index;
   State__init_uniform(insert_codon_codon, "insert_codon_codon", 3, params->emission_table_61_LAMBDA);
   insert_codon_codon->custom = index;
@@ -194,6 +196,67 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
   logv(1, "There are %i references.", fasta->num_references);
   for (uint8_t i=0; i < fasta->num_references; i++) {
     struct Sequence* reference = fasta->references[i];
+    bool reference_has_start = false;
+    bool reference_has_stop = false;
+
+    if (i==0) {
+      /* Find out whether the reference has a start codon.
+       * This has several possible cases:
+       * 1. The reference has a split codon --> no start codon to be expected; warn user if she expects otherwise (-f)
+       * ~2. The user used -f / --first-exon~
+       * 3. The user didn't give -f but the reference begins with start codon. --> warn user
+       */
+      reference_has_start = reference->start_split_length == 0;
+      if (!reference_has_start && params->firstexon) {
+        warn("Found split codon at acc-site, but you declared -f/--firstexon");
+      }
+      //reference_has_start &= params->firstexon;
+      bool match = true;
+      if (reference_has_start) {
+        for(uint8_t j = 0; j < params->num_start_codons; j++) {
+          match = true;
+          for(uint8_t k = 0; k < 3; k++) {
+            match &= reference->sequence[k] == params->start_codons[3*j+k];
+          }
+          if (match) {
+            break;
+          }
+        }
+        if (params->firstexon && !match) {
+          warn("Couldn't find declared start codon in reference %i. (counting from zero)", i);
+        }
+      }
+      reference_has_start &= match;
+    }
+    logv(1, "reference[%i] has start: %s", i, reference_has_start ? "true" : "false");
+
+    if (i==fasta->num_references-1) {
+      reference_has_stop = reference->end_split_length == 0;
+      if (!reference_has_stop && params->lastexon) {
+        warn("Found split codon at do-site, but you declared -l/--lastexon");
+      }
+      bool match = true;
+      if (reference_has_stop) {
+        for(uint8_t j = 0; j < params->num_stop_codons; j++) {
+          match = true;
+          for(uint8_t k = 0; k < 3; k++) {
+            logv(1, "reference[%i]->sequence[%i-3-%i] == params->stop-codons[3*%i+%i]: %c == %c", i,
+                reference->num_codon_bases, k, j, k,
+                Literal__char(reference->sequence[reference->start_split_length+reference->end_split_length+reference->num_codon_bases-3+k]),
+                Literal__char(params->stop_codons[3*j+k]));
+            match &= reference->sequence[reference->start_split_length+reference->end_split_length+reference->num_codon_bases-3+k] == params->stop_codons[3*j+k];
+          }
+          if (match)  {
+            break;
+          }
+        }
+        if (params->lastexon && !match) {
+          warn("Couldn't find declared stop codon in reference %i. (counting from zero)", i);
+        }
+      }
+      reference_has_stop &= match;
+      logv(1, "reference[%i] has stop: %s", i, reference_has_stop ? "true" : "false");
+    }
 
     // intron start
     struct State* intron_start;
@@ -218,20 +281,25 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     State__add_incoming(intron_start,        params->b2_bas,  between_acc_split);
     State__add_incoming(match_acceptor_end,    0,                  between_acc_split);
 
-    logv(1, "reference->start_split_length: %u", reference->start_split_length);
+    logv(1, "reference[%i]->start_split_length: %u", i, reference->start_split_length);
     struct State* split_codon_acceptor = HMM__new_state(hmm);
-    switch (reference->start_split_length) {
-      case 0:
-        State__init_silent(split_codon_acceptor, "split_codon_acceptor");
-        break;
-      case 1:
-        State__init_uniform(split_codon_acceptor, "split_codon_acceptor", 1, params->emission_table_4_UNIFORM);
-        break;
-      case 2:
-        State__init_uniform(split_codon_acceptor, "split_codon_acceptor", 2, params->emission_table_16_UNIFORM);
-        break;
-      default:
-        die("Invalid number of split codon nucleotides: %u", reference->start_split_length);
+    if (reference_has_start) {
+      // start
+      State__init(split_codon_acceptor, "match_codon", 3, params->start_codons, params->emission_table_start_LAMBDA);
+    } else {
+      switch (reference->start_split_length) {
+        case 0:
+          State__init_silent(split_codon_acceptor, "split_codon_acceptor");
+          break;
+        case 1:
+          State__init_uniform(split_codon_acceptor, "split_codon_acceptor", 1, params->emission_table_4_UNIFORM);
+          break;
+        case 2:
+          State__init_uniform(split_codon_acceptor, "split_codon_acceptor", 2, params->emission_table_16_UNIFORM);
+          break;
+        default:
+          die("Invalid number of split codon nucleotides: %u", reference->start_split_length);
+      }
     }
     State__add_incoming(between_acc_split,     Logodd__log(1.0 - Logodd__exp(params->fs_logodd)),    split_codon_acceptor);
 
@@ -244,13 +312,17 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     State__add_incoming(insert_codon_acceptor, params->i3_i1_acc,  insert_codon_acceptor);
 
     struct State* between_split_ins = HMM__new_state(hmm);
-    State__init_silent(between_split_ins, "between_split_ins");
+    if (reference_has_start) {
+      State__init_silent(between_split_ins, "between_match_ins");
+    } else {
+      State__init_silent(between_split_ins, "between_split_ins");
+    }
     State__add_incoming(split_codon_acceptor,                 0.0,     between_split_ins);
     State__add_incoming(between_acc_split,      params->fs_logodd,     between_split_ins);
     State__add_incoming(between_split_ins,     params->splice_nti,   insert_1nt_acceptor);
     State__add_incoming(between_split_ins,      params->splice_i1, insert_codon_acceptor);
 
-    // codons
+    // others
     struct State* start_first_codon = HMM__new_state(hmm);
     State__init_silent(start_first_codon, "start_first_codon");
     State__add_incoming(between_split_ins,  params->splice_js,  start_first_codon);
@@ -262,35 +334,49 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     struct State** codons = (struct State**) SAFEMALLOC(sizeof(struct State*) * (2 + reference->num_codons));
 
     // Iterate over Codons
-    create_codon_chain(hmm, params, &num_codons, codons, reference->num_codon_bases, &reference->sequence[reference->codons_offset], start_first_codon, &end_last_codon);
+    uint8_t start_offset = 0;
+    if (reference_has_start) start_offset = 3;
+    uint8_t stop_offset = 0;
+    if (reference_has_stop) stop_offset = 3;
 
-    logv(1, "Codons:\t%lu", num_codons);
-    assert(num_codons == reference->num_codons);
+    create_codon_chain(hmm, params, &num_codons, codons, reference->num_codon_bases-start_offset-stop_offset, &reference->sequence[reference->codons_offset+start_offset], start_first_codon, &end_last_codon);
+
+    logv(1, "Non-Start/Stop-Codons:\t%lu", num_codons);
+    assert(num_codons == reference->num_codons - ((stop_offset+start_offset)/3));
 
     forward_deletions(hmm, params, num_codons, codons);
 
     free(codons);
 
     // donor
-    logv(1, "reference->end_split_length: %u", reference->end_split_length);
+    logv(1, "reference[%i]->end_split_length: %u", i, reference->end_split_length);
     struct State* split_codon_donor = HMM__new_state(hmm);
-    switch (reference->end_split_length) {
-      case 0:
-        State__init_silent(split_codon_donor, "split_codon_donor");
-        break;
-      case 1:
-        State__init_uniform(split_codon_donor, "split_codon_donor", 1, params->emission_table_4_UNIFORM);
-        break;
-      case 2:
-        State__init_uniform(split_codon_donor, "split_codon_donor", 2, params->emission_table_16_UNIFORM);
-        break;
-      default:
-        die("Invalid number of split codon nucleotides in file %s: %u", params->fasta_file, params->split_emissions_donor);
+    if (reference_has_stop) {
+      // match the stop
+      State__init(split_codon_donor, "match_codon", 3, params->stop_codons, params->emission_table_stop_LAMBDA);
+    } else {
+      switch (reference->end_split_length) {
+        case 0:
+          State__init_silent(split_codon_donor, "split_codon_donor");
+          break;
+        case 1:
+          State__init_uniform(split_codon_donor, "split_codon_donor", 1, params->emission_table_4_UNIFORM);
+          break;
+        case 2:
+          State__init_uniform(split_codon_donor, "split_codon_donor", 2, params->emission_table_16_UNIFORM);
+          break;
+        default:
+          die("Invalid number of split codon nucleotides in file %s: %u", params->fasta_file, params->split_emissions_donor);
+      }
     }
     State__add_incoming(end_last_codon,        params->js_scd,     split_codon_donor);
 
     struct State* between_split_donor = HMM__new_state(hmm);
-    State__init_silent(between_split_donor, "between_split_donor");
+    if (reference_has_stop) {
+      State__init_silent(between_split_donor, "between_match_donor");
+    } else {
+      State__init_silent(between_split_donor, "between_split_donor");
+    }
     split_codons[num_split_codons++] = between_split_donor;
 
     State__add_incoming(end_last_codon,        params->fs_logodd,    between_split_donor);

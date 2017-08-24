@@ -43,7 +43,7 @@ doc:
 .PHONY: test
 test: ${objects} cesar
 	tests.sh ./cesar
-	make -C test
+
 
 .PHONY: test/valgrind
 test/valgrind: ${objects} cesar

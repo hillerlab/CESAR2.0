@@ -264,6 +264,31 @@ bool EmissionTable__init(struct EmissionTable* self, EMISSION_ID_T num_emissions
 }
 
 /**
+ * Set the emission probability to one n-th for each of n codons.
+ * @param self the EmissionTable.
+ * @param num_codons the number of codons (n).
+ * @param codons an array of a series of codons (e.g. [TAATGATAG] for all stop codons).
+ * @return success boolean.
+ */
+bool EmissionTable__init_single_codons(struct EmissionTable* self, uint8_t num_codons, Literal codons[num_codons]) {
+  EmissionTable__init(self, 3, LAMBDA_DISTRIBUTION);
+  LOGODD_T one_nth = 1.0 - Logodd__log((double) num_codons);
+
+  for(uint8_t i = 0; i < num_codons; i++) {
+    // for each query, set logodd concerning 
+    EMISSION_ID_T row = Literal__uint(self->num_literals, &codons[3*i]);
+    for (uint8_t j = 0; j < num_codons; j++) {
+      EMISSION_ID_T column = Literal__uint(self->num_literals, &codons[3*j]);
+      if (! LogoddMatrix__set(self->values, column, row, one_nth)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
+/**
  * Destroy an emission table's sub structure.
  * Notice: This only frees memory that has been allocated during init, not the given pointer itself.
  * @param self the EmissionTable to deconstruct.

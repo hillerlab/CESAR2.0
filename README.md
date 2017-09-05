@@ -326,7 +326,7 @@ Print the version and exit.
 CESAR 2.0 was implemented by Peter Schwede (MPI-CBG/MPI-PKS 2017). Virag Sharma (MPI-CBG/MPI-PKS 2017) implemented the workflow to annotate genes in several genomes.
 
 # References
-[1] Sharma V, Schwede P, and Hiller M. CESAR 2.0 substantially improves speed and accuracy of comparative gene annotation. Bioinformatics, in press
+[1] Sharma V, Schwede P, and Hiller M. [CESAR 2.0 substantially improves speed and accuracy of comparative gene annotation](https://academic.oup.com/bioinformatics/article/doi/10.1093/bioinformatics/btx527/4095639/CESAR-20-substantially-improves-speed-and-accuracy?guestAccessKey=eb84d3d0-0aef-484b-baac-e1c205b6c7ba). Bioinformatics, 2017
 
 [2] Sharma V, Elghafari A, and Hiller M. [Coding Exon-Structure Aware Realigner (CESAR) utilizes genome alignments for accurate comparative gene annotation](https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkw210). Nucleic Acids Res., 44(11), e103, 2016
 

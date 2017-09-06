@@ -45,9 +45,14 @@ int main(int argc, char* argv[argc]) {
   struct Profile** donors = SAFEMALLOC(sizeof(Profile*) * fasta.num_references);
 
   char prefix[PATH_STRING_LENGTH] = "extra/tables/";
-  if(strchr(parameters.clade, '/') != NULL) {
+  if(strchr(parameters.clade, '/') == NULL) {
+		logv(1, "found no slash in clade, will use prefix");
+		strncpy(parameters.clade, prefix, PATH_STRING_LENGTH);
+	} else {
+		logv(1, "found slash in clade, will reset prefix");
     memset(prefix, 0, strlen(prefix));
   }
+	logv(1, "prefix: %s", prefix);
 
   for (uint8_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];

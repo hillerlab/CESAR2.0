@@ -102,7 +102,7 @@ The results are in geneAnnotation/ as one file for each of the 4 query species i
 The UCSC genome browser provides gene annotations in genePred format for many species. Alternatively, the tools bedToGenePred or gff3ToGenePred can be used to create genePred from bed or gff format. Use UCSC's genePredCheck to check if your input file is valid. 
 * a "2bit" directory that contains the genomes of the reference and all query species. 
 Each species must have a subdirectory that is identical to the assembly name (e.g. hg38 for human, mm10 for mouse). In this subdirectory, you must have the genome sequence in [2bit format](https://genome.ucsc.edu/goldenpath/help/twoBit.html) and a file called 'chrom.sizes' that contains the size of all scaffolds. This file can be produced by 'twoBitInfo $assembly.2bit chrom.sizes'. 
-* a genome alignment in [maf format](https://genome.ucsc.edu/FAQ/FAQformat.html#format5). Index this maf file by running 'mafIndex $alignment.maf $alignment.bb' to create the index in bigBed format.
+* a genome alignment in [maf format](https://genome.ucsc.edu/FAQ/FAQformat.html#format5). Index this maf file by running 'mafIndex $alignment.maf $alignment.bb -chromSizes=/path/to/chrom.sizes/file/for/reference/assembly' to create the index in bigBed format.
 
 See the test case above for examples of all input files. 
 

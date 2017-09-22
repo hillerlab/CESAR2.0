@@ -25,20 +25,21 @@ To compile a doxygen documentation of this program at `doc/doxygen/index.html`, 
 git clone https://github.com/hillerlab/CESAR2.0/
 cd CESAR2.0/
 export PATH=$PATH:`pwd`/tools
+export profilePath=`pwd`
 make
 # this directory contains the mini example input data
 cd extra/miniExample
 
 # run CESAR on both genes listed in twoGenes.gp.forCESAR
-annotateGenesViaCESAR.pl POLR3K hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../ -maxMemory 1
-annotateGenesViaCESAR.pl SNRNP25 hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../ -maxMemory 1
+annotateGenesViaCESAR.pl POLR3K hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir $profilePath -maxMemory 1
+annotateGenesViaCESAR.pl SNRNP25 hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir $profilePath -maxMemory 1
 
 # combine the results into a genePred file
 bed2GenePred.pl oryAfe1 CESARoutput oryAfe1.gp
 
 # the result in oryAfe1.gp looks like
+SNRNP25	JH864469	+	42394	44193	42394	44193	5	42394,42799,43011,43524,44135	42466,42890,43117,43599,44193
 POLR3K	JH864469	-	38382	42006	38382	42006	3	38382,39767,41895	38510,39855,42006
-SNRNP25	JH864469	+	42379	44193	42379	44193	5	42379,42799,43011,43524,44135	42466,42890,43117,43599,44193
 ```
 
 # Example of annotating genes in several genomes

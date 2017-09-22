@@ -52,6 +52,8 @@ mkdir CESARTest; cd CESARTest
 # get code and data
 git clone https://github.com/hillerlab/CESAR2.0/
 cd CESAR2.0/
+export PATH=$PATH:`pwd`/tools
+export profilePath=`pwd`
 make
 cd ..
 
@@ -69,13 +71,11 @@ export outputDir=CESARoutput
 export resultsDir=geneAnnotation
 # this will set the maxMemory to the amount of RAM in your machine - 1 Gb
 export maxMemory=`grep MemTotal /proc/meminfo | awk '{print int($2/1000000)-1}'`
-export cesarTools=./CESAR2.0/tools
-PATH=$PATH:$cesarTools
 
 # create all CESAR jobs
 formatGenePred.pl ${inputGenes} ${inputGenes}.forCESAR ${inputGenes}.discardedTranscripts -longest
 for transcript in `cut -f1 ${inputGenes}.forCESAR`; do 
-   echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${cesarTools} -maxMemory ${maxMemory}"
+   echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${profilePath} -maxMemory ${maxMemory}"
 done > jobList
 
 # realign all genes by executing the jobList or push it to your compute cluster

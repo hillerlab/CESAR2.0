@@ -118,10 +118,11 @@ export querySpecies=... # a comma-separated list of the query species that you w
 export outputDir=...    # name of CESAR2.0 output directory that will contain exon coordinates (in subdirectories). The directory will be created, if it does not exist. 
 export resultsDir=...   # directory containing the final gene annotation (one genePred file per species)
 export maxMemory=...    # maximum amount of memory in Gb that CESAR 2.0 can allocate. With 30 Gb, all but 3 human genes succeed. With 50 Gb, all human genes succeed. 
-export cesarTools=...   # path to the tools directory. This must contain the 'cesar' binary and the 'extra' subdirectory containing CESAR's profiles and matrices
+export profilePath=...   # path to the directory that contains the 'extra' subdirectory containing CESAR's profiles and matrices
+export cesarTools=...   # path to the tools directory. This must contain the 'cesar' binary and other tools such as formatGenePred.pl that are bundled together in the 'tools' directory
 export PATH=$PATH:$cesarTools
 ```
-It is recommended to add the last export command to your .bashrc.
+It is recommended to add the last export command to your .bashrc so that all the relevant tools are now in your path
 
 ### Step 2: 
 Create the input file for CESAR 2.0 from the genePred gene annotation file by running
@@ -140,7 +141,7 @@ This step produces an output file that has the coordinates of all coding exons. 
 Generate the CESAR 2.0 commands for all transcripts by running:
 ```
 for transcript in `cut -f1 ${inputGenes}.forCESAR`; do 
-  echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${cesarTools} -maxMemory ${maxMemory}"
+  echo "annotateGenesViaCESAR.pl ${transcript} ${alignment} ${inputGenes}.forCESAR ${reference} ${querySpecies} ${outputDir} ${twoBitDir} ${profilePath} -maxMemory ${maxMemory}"
 done > jobList
 ```
 

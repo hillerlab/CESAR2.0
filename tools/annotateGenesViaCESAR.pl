@@ -189,7 +189,8 @@ foreach my $gene(keys(%geneInfoHash)) {
 		
 		$refSeqHash{$exonCt} = $seqRefPrint;
 		
-		my $mafExtractCall = "set -o pipefail; mafExtract -region=$chrRef:$refStart-$refStop $mafIndex stdout|mafSpeciesSubset stdin speciesList=$speciesList,$reference species.lst=NULL $mafFile";
+		my $mafExtractCall = "/bin/bash -c 'set -o pipefail; mafExtract -region=$chrRef:$refStart-$refStop $mafIndex stdout|mafSpeciesSubset stdin NULL $mafFile -speciesList=$speciesList,$reference'";
+		print "Running $mafExtractCall\n" if ($verbose);
 		system($mafExtractCall) == 0 || die "Error running '$mafExtractCall'\n";
 		my($ref2cdsStartQuery,$ref2cdsStopQuery,$ref2strandQuery,$ref2chrQuery,$ref2moreThanOneStrand,$ref2moreThanOneChr,$ref2SpeciesList,$ref2cdsPrint,$ref2seqLength) = getCoordinatesFromMaf($mafFile,$reference);
 		

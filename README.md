@@ -223,14 +223,14 @@ GACTCCTGCGCCATGAGAGCGAAGGTGAGCGGCTCTTAGGTGGTGAATCGGGCACCTAGTCCCCGCCATGGTTCCTCTGC
 
 ## Common Parameters
 
+### Profiles 
+The default directory provides profiles for donor and acceptor splice sites that are computed from human data. For very different species, you may want to update the profiles to your reference species
+
 `-f/--firstexon`
 Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used (extra/tables/{clade}/firstCodon_profile.txt) instead of default acceptor profile (extra/tables/{clade}/acc_profile.txt).
 
 `-l/--lastexon`
 Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used (extra/tables/{clade}/lastCodon_profile.txt) instead of default donor profile (extra/tables/{clade}/donor_profile.txt).
-
-`-m/--matrix <matrix file>`
-Use a different codon substitution matrix by specifying a different file.
 
 `-p/--profiles <acceptor> <donor>`
 Use different acceptor and donor profiles by specifying the path to different profile files. NOTE: This overrides the default settings done by -f / -l or -c. You can use -p to specify U12 donor/acceptor profiles for exons flanked by a U12 intron. 
@@ -246,6 +246,11 @@ You can provide profiles for another species in a directory extra/tables/$specie
 
 Note that with `-l` and/or `-f`, CESAR 2.0 will look for firstCodon_profile.txt/lastCodon_profile.txt in the extra/tables/$species directory.
 
+### Codon Substitution Matrix
+`-m/--matrix <matrix file>`
+Use a different codon substitution matrix by specifying a different file.
+
+### Memory
 `-x/--max-memory`
 By default, CESAR2 stops if it is expected to allocate more than 16 GB of RAM.
 With this flag, you can set the maximum RAM allowed for CESAR2.

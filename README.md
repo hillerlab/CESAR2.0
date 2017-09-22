@@ -206,6 +206,8 @@ TCCCAGGTCACGATCATCGGCTACACGCTGGGGATTCCTGACGTCATCATGGGGAGACAAGGTGGGGCCCACGTGGGGAG
 ```
 
 Example 3: Gene mode of CESAR 2.0. Provide an input file that lists multiple consecutive or all exons of a gene. By default, CESAR2 assumes that the first given exon is the first coding exon (start codon .. donor), that the last given exon is the last coding exon (acceptor .. stop codon) and that all exons in-between are internal exons (acceptor .. donor). Alternatively, you can specify first/internal/last coding exon by adding the profiles tab-separated after the sequences. If no profiles are specified, CESAR2 outputs a missing profile warning. Reference exons are separated by a line starting with hashes from one or more query sequences.
+
+NOTE: This format overrides any of the -l/-f/-c/-p parameters that specify profile files below.
 ```
 >exon1	extra/tables/human/firstCodon_profile.txt	extra/tables/human/do_profile.txt
 AGAGCCAAG
@@ -221,17 +223,17 @@ GACTCCTGCGCCATGAGAGCGAAGGTGAGCGGCTCTTAGGTGGTGAATCGGGCACCTAGTCCCCGCCATGGTTCCTCTGC
 
 ## Common Parameters
 
+### Profiles 
+The default directory provides profiles for donor and acceptor splice sites that are computed from human data. For very different species, you may want to update the profiles to your reference species
+
 `-f/--firstexon`
-Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used instead of the acceptor profile.
+Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used (extra/tables/{clade}/firstCodon_profile.txt) instead of default acceptor profile (extra/tables/{clade}/acc_profile.txt).
 
 `-l/--lastexon`
-Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used instead of the donor profile.
-
-`-m/--matrix <matrix file>`
-Use a different codon substitution matrix by specifying a different file.
+Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used (extra/tables/{clade}/lastCodon_profile.txt) instead of default donor profile (extra/tables/{clade}/donor_profile.txt).
 
 `-p/--profiles <acceptor> <donor>`
-Use different acceptor and donor profiles by specifying different profile files.
+Use different acceptor and donor profiles by specifying the path to different profile files. NOTE: This overrides the default settings done by -f / -l or -c. You can use -p to specify U12 donor/acceptor profiles for exons flanked by a U12 intron. 
 
 `-c/--clade <human|mouse>` (default: `human`)
 A shortcut to default sets of substitution matrix and profiles.
@@ -242,10 +244,13 @@ By default, CESAR2 uses profiles obtained from human.
 You can provide profiles for another species in a directory extra/tables/$species and tell CESAR 2.0 to use these profiles by
 `./cesar --clade $species example1.fa`
 
-If <clade> contains a slash `/` it will be interpreted as look-up directory for profiles.
+Note that with `-l` and/or `-f`, CESAR 2.0 will look for firstCodon_profile.txt/lastCodon_profile.txt in the extra/tables/$species directory.
 
-**Note:** With `-l` and/or `-f`, the profiles will change accordingly.
+### Codon Substitution Matrix
+`-m/--matrix <matrix file>`
+Use a different codon substitution matrix by specifying a different file.
 
+### Memory
 `-x/--max-memory`
 By default, CESAR2 stops if it is expected to allocate more than 16 GB of RAM.
 With this flag, you can set the maximum RAM allowed for CESAR2.

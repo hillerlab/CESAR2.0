@@ -30,8 +30,8 @@ make
 cd extra/miniExample
 
 # run CESAR on both genes listed in twoGenes.gp.forCESAR
-annotateGenesViaCESAR.pl POLR3K hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../tools -maxMemory 1
-annotateGenesViaCESAR.pl SNRNP25 hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../tools -maxMemory 1
+annotateGenesViaCESAR.pl POLR3K hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../ -maxMemory 1
+annotateGenesViaCESAR.pl SNRNP25 hg38_oryAfe1.bb twoGenes.gp.forCESAR hg38 oryAfe1 CESARoutput 2bitDir ../../ -maxMemory 1
 
 # combine the results into a genePred file
 bed2GenePred.pl oryAfe1 CESARoutput oryAfe1.gp

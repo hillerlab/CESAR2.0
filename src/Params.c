@@ -16,6 +16,7 @@
 
 bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]) {
   self->dirty = false;
+  self->acc_do_specified = false;
   self->firstexon = false;
   self->lastexon = false;
   self->max_memory = MEMORYLIMIT;
@@ -61,13 +62,13 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
 
   //strncpy(self->blosum_file, "blosum_freq62", PATH_STRING_LENGTH-1);
 
-  strncpy(self->eth_file, "%s/eth_codon_sub.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->acc_profile, "%s/acc_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->first_codon_profile, "%s/firstCodon_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->do_profile, "%s/do_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->last_codon_profile, "%s/lastCodon_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->u12_acc_profile, "%s/u12_acc_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->u12_donor_profile, "%s/u12_donor_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->eth_file, "extra/tables/%s/eth_codon_sub.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->acc_profile, "extra/tables/%s/acc_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->first_codon_profile, "extra/tables/%s/firstCodon_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->do_profile, "extra/tables/%s/do_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->last_codon_profile, "extra/tables/%s/lastCodon_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->u12_acc_profile, "extra/tables/%s/u12_acc_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->u12_donor_profile, "extra/tables/%s/u12_donor_profile.txt", PATH_STRING_LENGTH-1);
 
   EmissionTable__init(self->emission_table_4_UNIFORM,  1, UNIFORM_DISTRIBUTION);
   EmissionTable__init(self->emission_table_16_UNIFORM, 2, UNIFORM_DISTRIBUTION);

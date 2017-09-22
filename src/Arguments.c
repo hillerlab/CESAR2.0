@@ -73,10 +73,6 @@ bool Arguments__read(int argc, char** argv, struct Params* parameters) {
       return false;
     }
 
-    if (argument[0] == '-' && argc <= i+1) {
-      print_help();
-      die("Insufficient number of parameters for argument %s.", argument);
-    }
     if (!strcmp(argument, "-i") || !strcmp(argument, "--split_codon_emissions")) {
       Params__set_via_str(parameters, "split_emissions_acceptor", argv[++i]);
       Params__set_via_str(parameters, "split_emissions_donor", argv[++i]);
@@ -91,6 +87,7 @@ bool Arguments__read(int argc, char** argv, struct Params* parameters) {
     } else if (!strcmp(argument, "-p")  || !strcmp(argument, "--profiles")) {
       Params__set_via_str(parameters, "acc_profile", argv[++i]);
       Params__set_via_str(parameters, "do_profile", argv[++i]);
+		parameters->acc_do_specified = true;
     } else if (!strcmp(argument, "-s")  || !strcmp(argument, "--set")) {
       int j = i+1;
       for (; j < argc; j++) {

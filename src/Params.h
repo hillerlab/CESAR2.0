@@ -42,6 +42,8 @@ typedef struct Params {
     * emission_table_stop_LAMBDA;
 
   bool dirty;
+  
+  bool acc_do_specified;  /* set to 1 if -p {acc_profile} {do_profile} is given */
 
   size_t num_factors;
   long double multiple_cd_factors[10];

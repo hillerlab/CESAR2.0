@@ -45,14 +45,6 @@ int main(int argc, char* argv[argc]) {
   struct Profile** donors = SAFEMALLOC(sizeof(Profile*) * fasta.num_references);
 
   char prefix[PATH_STRING_LENGTH] = "extra/tables/";
-  if(strchr(parameters.clade, '/') == NULL) {
-		logv(1, "found no slash in clade, will use prefix");
-		strncpy(parameters.clade, prefix, PATH_STRING_LENGTH);
-	} else {
-		logv(1, "found slash in clade, will reset prefix");
-    memset(prefix, 0, strlen(prefix));
-  }
-	logv(1, "prefix: %s", prefix);
 
   for (uint8_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];
@@ -73,7 +65,8 @@ int main(int argc, char* argv[argc]) {
         warn("Missing acceptor profile for reference %u.", i);
       }
       acceptors[i] = Profile__create("acceptor");
-      if (i == 0 && ((parameters.firstexon && fasta.num_references == 1) || (!parameters.firstexon && fasta.num_references > 1))) {
+		/* only read the default extra/tables/{clade}/firstCodon_profile.txt if -p {acc_profile} {do_profile} is not given (flag parameters.accSpecified) */
+      if (i == 0 && !parameters.acc_do_specified && ((parameters.firstexon && fasta.num_references == 1) || (!parameters.firstexon && fasta.num_references > 1))) {
         Profile__read(acceptors[i], parameters.first_codon_profile);
       } else {
         Profile__read(acceptors[i], parameters.acc_profile);
@@ -97,7 +90,8 @@ int main(int argc, char* argv[argc]) {
         warn("Missing donor profile for reference %u.", i);
       }
       donors[i] = Profile__create("donor");
-      if (i == fasta.num_references-1 && ((parameters.lastexon && fasta.num_references == 1) || (!parameters.lastexon && fasta.num_references > 1))) {
+		/* only read the default extra/tables/{clade}/firstCodon_profile.txt if -p {acc_profile} {do_profile} is not given (flag parameters.doSpecified) */
+      if (i == fasta.num_references-1 && !parameters.acc_do_specified && ((parameters.lastexon && fasta.num_references == 1) || (!parameters.lastexon && fasta.num_references > 1))) {
         Profile__read(donors[i], parameters.last_codon_profile);
       } else {
         Profile__read(donors[i], parameters.do_profile);

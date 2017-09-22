@@ -222,16 +222,16 @@ GACTCCTGCGCCATGAGAGCGAAGGTGAGCGGCTCTTAGGTGGTGAATCGGGCACCTAGTCCCCGCCATGGTTCCTCTGC
 ## Common Parameters
 
 `-f/--firstexon`
-Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used instead of the acceptor profile.
+Given exon is the first coding exon. Only relevant for single exon mode. The default profile for a start codon is used (extra/tables/{clade}/firstCodon_profile.txt) instead of default acceptor profile (extra/tables/{clade}/acc_profile.txt).
 
 `-l/--lastexon`
-Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used instead of the donor profile.
+Given exon is the last coding exon. Only relevant for single exon mode. The default profile for stop codons is used (extra/tables/{clade}/lastCodon_profile.txt) instead of default donor profile (extra/tables/{clade}/donor_profile.txt).
 
 `-m/--matrix <matrix file>`
 Use a different codon substitution matrix by specifying a different file.
 
 `-p/--profiles <acceptor> <donor>`
-Use different acceptor and donor profiles by specifying different profile files.
+Use different acceptor and donor profiles by specifying the path to different profile files. NOTE: This overrides the default settings done by -f / -l or -c. You can use -p to specify U12 donor/acceptor profiles for exons flanked by a U12 intron. 
 
 `-c/--clade <human|mouse>` (default: `human`)
 A shortcut to default sets of substitution matrix and profiles.
@@ -242,9 +242,7 @@ By default, CESAR2 uses profiles obtained from human.
 You can provide profiles for another species in a directory extra/tables/$species and tell CESAR 2.0 to use these profiles by
 `./cesar --clade $species example1.fa`
 
-If <clade> contains a slash `/` it will be interpreted as look-up directory for profiles.
-
-**Note:** With `-l` and/or `-f`, the profiles will change accordingly.
+Note that with `-l` and/or `-f`, CESAR 2.0 will look for firstCodon_profile.txt/lastCodon_profile.txt in the extra/tables/$species directory.
 
 `-x/--max-memory`
 By default, CESAR2 stops if it is expected to allocate more than 16 GB of RAM.

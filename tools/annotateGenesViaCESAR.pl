@@ -192,6 +192,15 @@ foreach my $gene(keys(%geneInfoHash)) {
 		my $mafExtractCall = "/bin/bash -c 'set -o pipefail; mafExtract -region=$chrRef:$refStart-$refStop $mafIndex stdout|mafSpeciesSubset stdin NULL $mafFile -speciesList=$speciesList,$reference'";
 		print "Running $mafExtractCall\n" if ($verbose);
 		system($mafExtractCall) == 0 || die "Error running '$mafExtractCall'\n";
+		
+		my $ref_species_list = get_maf_species_list($mafFile); ## check if the maf file contains some s-lines. If a maf is generated from nets without running mafAddIRows
+		my @species_list_maf = @$ref_species_list;
+		if (scalar(@species_list_maf) < 1) {
+			print "Omitting exon '$e', since there is nothing in the maf for this exon\n";
+			$exonCt++;
+			next;
+		}
+		
 		my($ref2cdsStartQuery,$ref2cdsStopQuery,$ref2strandQuery,$ref2chrQuery,$ref2moreThanOneStrand,$ref2moreThanOneChr,$ref2SpeciesList,$ref2cdsPrint,$ref2seqLength) = getCoordinatesFromMaf($mafFile,$reference);
 		
 		my @speciesPresentInMaf = @$ref2SpeciesList;
@@ -467,6 +476,16 @@ safeDie("NA"); ## this call simply deletes all temp files
 ####               Subroutines begin                ####
 ########################################################
 
+sub get_maf_species_list {  ## given a maf, this function runs mafSpeciersList and returns reference to an array that contains the species in the maf:
+	my $maf = shift;	
+	## Get the list of species present in maf
+	my @speciesList = ();			### create a species_array which contains the list of all the species present in the maf block.
+	@speciesList = `mafSpeciesList $maf stdout`; 
+	chomp(@speciesList);
+	$" = " ";	# separate array elements by a space in the output and remove the reference from the list
+	return \@speciesList;
+}
+
 sub getCoordinatesFromMaf { ## This function gives me the coordinates (the start/stop/chr/strand) for the different species in the maf
 
 	my ($maf,$reference,$ref2TempFilesList) = @_;
@@ -475,12 +494,9 @@ sub getCoordinatesFromMaf { ## This function gives me the coordinates (the start
 	my @mafExtractResult = <FIM>;
 	close FIM;
 
-	## Get the list of species present in maf
-	my @speciesList = ();			### create a species_array which contains the list of all the species present in the maf block.
-	@speciesList = `mafSpeciesList $maf stdout`; 
-	chomp(@speciesList); 
-	die "ERROR: mafSpeciesList must have failed because the list of species is empty\n" if (scalar @speciesList < 1); 
-	$" = " ";	# separate array elements by a space in the output and remove the reference from the list
+	my $ref_species_list = get_maf_species_list($maf);
+	my @speciesList = @$ref_species_list;
+	
 	@speciesList = grep{$_ ne $reference} @speciesList;
 
 	my %cdsStartHash = my %cdsStopHash = ();

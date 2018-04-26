@@ -25,6 +25,7 @@ bool Sequence__init(struct Sequence* self) {
   self->num_codon_bases = 0;
   self->num_states = 0;
   self->num_align_spaces = 0;
+  self->hasStartCodonAsSplitCodonState = 0;
 
   self->acceptor[0] = '\0';
   self->donor[0] = '\0';

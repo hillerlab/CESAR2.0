@@ -100,6 +100,7 @@ bool find_best_deletion(struct State* deletion, struct EmissionTable* emission_t
 struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struct Params* params, size_t path_length, struct State** path) {
   uint8_t reference_id = 0;
   const char lower = 'a' - 'A';
+  int numAlignedRefChars = 0;		/* for sanity check that the entire reference seq is contained in the alignment */
 
   struct Alignment* self = (struct Alignment*) SAFEMALLOC(sizeof(struct Alignment));
   size_t length = fasta->queries[query_id]->length;
@@ -141,9 +142,11 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
       } else if (!strncmp("split_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
+        numAlignedRefChars ++;
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
       } else if (!strncmp("start_codon", path[i]->name, 11) || !strncmp("stop_codon", path[i]->name, 10) || !strncmp("match_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        numAlignedRefChars ++;
         self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]);
       } else if (!strncmp("match", path[i]->name, 5)) {  // donor, acceptor
         self->reference[t+j] = ' ';
@@ -165,6 +168,7 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
           q += path[i]->num_emissions;
         }
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        numAlignedRefChars ++;
         self->query[t+j] = deletion[3-pending_deletion--];
 
         if (pending_deletion == 0) {
@@ -179,6 +183,16 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
       }
     }
 
+    if (!strncmp("start_first_codon", path[i-1]->name, 17) && !strncmp("between_match_donor", path[i]->name, 19)) {
+		/* special case that should only exist if the stop codon is the only codon */
+      logv(3, "add the deletion of the only existing codon");
+      for (; j < 3; j++) {
+  	     self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        numAlignedRefChars ++;
+     	  self->query[t+j] = '-';
+      }
+    }
+
     if (!strncmp("between_split_donor", path[i-1]->name, 19) && !strncmp("between_acc_split", path[i]->name, 17)) {
       for (j=0; j < 19; j++) {
         self->reference[t+j] = '>';
@@ -189,6 +203,7 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         !strncmp("between_split_ins", path[i]->name, 17)) {
       for (; j < fasta->references[reference_id]->start_split_length; j++) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
+        numAlignedRefChars ++;
         self->query[t+j] = '-';
       }
     }
@@ -198,6 +213,7 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         !strncmp("between_match_ins", path[i]->name, 17)) {
       for (; j < 3; j++) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        numAlignedRefChars ++;
         self->query[t+j] = '-';
       }
     }
@@ -207,15 +223,19 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         !strncmp("between_match_donor", path[i]->name, 19)) {
       for (; j < 3; j++) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
+        numAlignedRefChars ++;
         self->query[t+j] = '-';
       }
     }
 
-    if (i > 0 && !strncmp("between_split_donor", path[i]->name, 19) &&
-        !strncmp("end_codon", path[i-1]->name, 9) && path[i-1]->custom ==
-        fasta->references[reference_id]->num_codons-1) {
+
+
+    if (i > 0 && !strncmp("between_split_donor", path[i]->name, 19) && 
+        !strncmp("end_codon", path[i-1]->name, 9) && path[i-1]->custom == 
+        fasta->references[reference_id]->num_codons-1-fasta->references[reference_id]->hasStartCodonAsSplitCodonState) {
       for (; j < fasta->references[reference_id]->end_split_length; j++) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
+        numAlignedRefChars ++;
         self->query[t+j] = '-';
       }
     }
@@ -239,12 +259,23 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
           logv(3, "next reference: %u", reference_id)
         }
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r]);
+        numAlignedRefChars ++;
         self->query[t+j] = '-';
         logv(3, "i=%lu\tt=%lu\tj=%u\tq=%lu\tr=%lu\tref='%c'\tqry='%c'\t%s -> %s (%s)", i, t, j, q, r, self->reference[t+j], self->query[t+j], path[i-1]->name, path[i]->name, bases);
         r++;
       }
     }
     t += j;
+  }
+
+  /* sanity check that the entire reference seq is contained in the alignment */
+  int totalRefLen = 0;
+  for (uint8_t i=0; i < fasta->num_references; i++) {
+      totalRefLen += fasta->references[i]->length;
+  }
+  if (numAlignedRefChars != totalRefLen) {
+     	fprintf(stderr, "ERROR: there are %d bases in the reference but only %d ref bases are in the final alignment.\n", totalRefLen, numAlignedRefChars);
+	   exit(-1);
   }
 
   return self;

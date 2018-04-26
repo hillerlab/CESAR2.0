@@ -27,7 +27,8 @@ typedef struct Sequence {
          num_align_spaces,
          num_codons,
          length_reserved,
-         genome_location_start;
+         genome_location_start,
+         hasStartCodonAsSplitCodonState;
 } Sequence;
 
 bool Sequence__init(struct Sequence* self);

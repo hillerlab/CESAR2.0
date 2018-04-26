@@ -286,6 +286,7 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     if (reference_has_start) {
       // start
       State__init(split_codon_acceptor, "match_codon", 3, params->start_codons, params->emission_table_start_LAMBDA);
+      reference->hasStartCodonAsSplitCodonState = 1;
     } else {
       switch (reference->start_split_length) {
         case 0:

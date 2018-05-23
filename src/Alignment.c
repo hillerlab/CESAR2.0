@@ -199,12 +199,23 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
         self->query[t+j] = '-';
       }
     }
+
     if (i > 0 && !strncmp("between_acc_split", path[i-1]->name, 17) &&
         !strncmp("between_split_ins", path[i]->name, 17)) {
       for (; j < fasta->references[reference_id]->start_split_length; j++) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
         numAlignedRefChars ++;
         self->query[t+j] = '-';
+        logv(3, "i=%lu\tt=%lu\tj=%u\tq=%lu\tr=%lu\tref='%c'\tqry='%c'\t%s -> %s (%s)", i, t, j, q, r, self->reference[t+j], self->query[t+j], path[i-1]->name, path[i]->name, bases);
+      }
+    }
+	 
+    if (i > 0 && !strncmp("start_first_codon", path[i-1]->name, 17) && !strncmp("between_split_donor", path[i]->name, 19)) {
+      for (; j < fasta->references[reference_id]->end_split_length; j++) {
+        self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
+        numAlignedRefChars ++;
+        self->query[t+j] = '-';
+        logv(3, "i=%lu\tt=%lu\tj=%u\tq=%lu\tr=%lu\tref='%c'\tqry='%c'\t%s -> %s (%s)", i, t, j, q, r, self->reference[t+j], self->query[t+j], path[i-1]->name, path[i]->name, bases);
       }
     }
 

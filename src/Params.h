@@ -51,7 +51,7 @@ typedef struct Params {
   long double no_leading_introns_prob,
            no_trailing_introns_prob;
 
-  uint8_t split_emissions_acceptor,
+  size_t split_emissions_acceptor,
           split_emissions_donor,
           max_memory;
 

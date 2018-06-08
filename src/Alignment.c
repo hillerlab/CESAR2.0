@@ -285,8 +285,10 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
       totalRefLen += fasta->references[i]->length;
   }
   if (numAlignedRefChars != totalRefLen) {
-     	fprintf(stderr, "ERROR: there are %d bases in the reference but only %d ref bases are in the final alignment.\n", totalRefLen, numAlignedRefChars);
-	   exit(-1);
+		if (params->sanityChecks) {
+	     	fprintf(stderr, "ERROR: there are %d bases in the reference but only %d ref bases are in the final alignment.\n", totalRefLen, numAlignedRefChars);
+		   exit(-1);
+		}
   }
 
   return self;

@@ -19,6 +19,7 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->acc_do_specified = false;
   self->firstexon = false;
   self->lastexon = false;
+  self->sanityChecks = false;
   self->max_memory = MEMORYLIMIT;
 
   self->num_start_codons = 1;

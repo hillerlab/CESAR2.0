@@ -44,6 +44,7 @@ void print_help() {
          "             -v/--verbosity <0 .. 2>\n"
          "             -V/--version\n"
          "             -s/--set name1=value1 .. nameN=valueN\n"
+         "             -S/--sanityChecks  (error-exit if sanity checks fail)\n"
          "             -h/--help\n");
 }
 
@@ -107,6 +108,8 @@ bool Arguments__read(int argc, char** argv, struct Params* parameters) {
       parameters->firstexon = true;
     } else if (!strcmp(argument, "-l") || !strcmp(argument, "--lastexon")) {
       parameters->lastexon = true;
+    } else if (!strcmp(argument, "-S") || !strcmp(argument, "--sanityChecks")) {
+      parameters->sanityChecks = true;
     } else {
       num_input_files++;
       if (num_input_files > 1) {

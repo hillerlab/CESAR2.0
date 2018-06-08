@@ -61,7 +61,7 @@ typedef struct Params {
   uint8_t num_stop_codons;
   Literal* stop_codons;
 
-  bool multiexon, lastexon, firstexon, forcelong;
+  bool multiexon, lastexon, firstexon, forcelong, sanityChecks;
 
   LOGODD_T stop_codon_emission_logodd,
            fs_logodd,

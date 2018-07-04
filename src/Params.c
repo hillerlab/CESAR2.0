@@ -19,6 +19,7 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->acc_do_specified = false;
   self->firstexon = false;
   self->lastexon = false;
+  self->sanityChecks = false;
   self->max_memory = MEMORYLIMIT;
 
   self->num_start_codons = 1;
@@ -376,8 +377,8 @@ bool Params__set_via_str(struct Params* self, char* string, char* value) {
     {"skip_do",                   &self->skip_do},
     {"e1_e1",                     &self->e1_e1}
   };
-#define UINT_LENGTH 3
-  const void* UINT_DICT[UINT_LENGTH][2] = {
+#define INT_LENGTH 3
+  const void* INT_DICT[INT_LENGTH][2] = {
     {"split_emissions_acceptor",  &self->split_emissions_acceptor},
     {"split_emissions_donor",     &self->split_emissions_donor},
     {"max_memory",                &self->max_memory}
@@ -404,13 +405,13 @@ bool Params__set_via_str(struct Params* self, char* string, char* value) {
     }
   }
 
-  // assume value is a uint
-  for (int i=0; i < UINT_LENGTH; i++) {
-    if (!strcmp(UINT_DICT[i][0], string)) {
-      unsigned int uint = 0;
-      sscanf(value, "%u", &uint);
-      *((uint8_t*) UINT_DICT[i][1]) = (uint8_t) uint;
-      logv(1, "Setting %s := %u", string, *((uint8_t*) UINT_DICT[i][1]));
+  // assume value is a int
+  for (int i=0; i < INT_LENGTH; i++) {
+    if (!strcmp(INT_DICT[i][0], string)) {
+      int ii = 0;
+      sscanf(value, "%d", &ii);
+      *((size_t*) INT_DICT[i][1]) = (size_t) ii;
+      logv(1, "Setting %s := %u", string, *((size_t*) INT_DICT[i][1]));
       return true;
     }
   }

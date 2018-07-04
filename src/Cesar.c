@@ -111,11 +111,12 @@ int main(int argc, char* argv[argc]) {
     logv(1, "Query %u length: %lu", i, fasta.queries[i]->length);
     qlength += fasta.queries[i]->length;
   }
-  float mem = 7e-9*(rlength*qlength + 4*rlength);  // in GB. Factor 7e-9 is taken from measurements.
-  if (mem > (float)parameters.max_memory) {
-    die("The memory consumption is limited to %u GB by default. Your attempt requires %u GB. You can change the limit via --max-memory.", parameters.max_memory, (uint8_t)mem);
+  double mem = 7e-9*(rlength*qlength + 4*rlength);  // in GB. Factor 7e-9 is taken from measurements.
+  logv(1, "Expecting a memory consumption of: %f GB (max_memory %f)", mem, (double)parameters.max_memory);
+  if (mem > (double)parameters.max_memory) {
+    die("The memory consumption is limited to %1.4f GB by default. Your attempt requires %1.4f GB. You can change the limit via --max-memory.", (double)parameters.max_memory, mem);
   } else {
-    logv(1, "Expecting a memory consumption of: %u GB", (uint8_t)mem);
+    logv(1, "Expecting a memory consumption of: %1.4f GB", mem);
   }
 
   if (g_loglevel >= 7) {

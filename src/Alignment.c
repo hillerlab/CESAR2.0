@@ -143,7 +143,7 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
       } else if (!strncmp("split_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]) + lower;
         numAlignedRefChars ++;
-        self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]) + lower;
+        self->query[t+j] = Literal__char(fasta->queries[query_id]->sequence[q++]);
       } else if (!strncmp("start_codon", path[i]->name, 11) || !strncmp("stop_codon", path[i]->name, 10) || !strncmp("match_codon", path[i]->name, 11)) {
         self->reference[t+j] = Literal__char(fasta->references[reference_id]->sequence[r++]);
         numAlignedRefChars ++;

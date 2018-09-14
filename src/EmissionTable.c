@@ -230,6 +230,7 @@ LOGODD_T EmissionTable__by_literals(struct EmissionTable* self, Literal referenc
   }
 
   logv(7, "reference_visits=%u\ttotalsum=%f", reference_visits, total_sum);
+  free(visited_reference);
 
   return Logodd__log(total_sum / reference_visits);
 }

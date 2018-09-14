@@ -100,24 +100,44 @@ int main(int argc, char* argv[argc]) {
     logv(1, "Reference %u uses donor:\t%s", i, donors[i]->filename);
   }
 
+
+  /* estimate memory consumption */
+  size_t num_states = 0;
   size_t rlength = 0;
+  size_t qlength = 0;
+  size_t qlength_max = 0;
   for (uint8_t i=0; i < fasta.num_references; i++) {
+    struct Sequence* reference = fasta.references[i];
+    num_states += 6 + 6 * reference->num_codons + 1 + 2 + 2 + 22 + 6;  /* 22 and 6 for acc and donor states */
+
     logv(1, "Reference %u length: %lu", i, fasta.references[i]->length);
     logv(1, "Reference %u split codon lengths: %u %u", i, fasta.references[i]->start_split_length, fasta.references[i]->end_split_length);
     rlength += 11 + 6 * fasta.references[i]->length + donors[i]->length + acceptors[i]->length;
   }
-  size_t qlength = 0;
   for (uint8_t i=0; i < fasta.num_queries; i++) {
     logv(1, "Query %u length: %lu", i, fasta.queries[i]->length);
     qlength += fasta.queries[i]->length;
+    if (fasta.queries[i]->length > qlength_max) {
+	    qlength_max = fasta.queries[i]->length;
+    }
   }
-  double mem = 7e-9*(rlength*qlength + 4*rlength);  // in GB. Factor 7e-9 is taken from measurements.
+
+  double mem = 
+     (num_states * 4 * sizeof(double))                     +   /* Viterbi logodds vmatrix, double has typically 8 bytes */
+     (num_states * qlength_max * sizeof(uint32_t))         +   /* Viterbi path matrix, uint32 = 4 bytes*/
+     (num_states * sizeof(State))                          +   /* Space for all the state structures, each 304 bytes for a struct State */
+	  ((2 * qlength_max + rlength) * sizeof(struct State*)) +   /* Space for Viterbi path, 8 bytes for a pointer on a 64 bit system */
+	  ((qlength_max + rlength) * 2 * sizeof(char))          +   /* Space for the aligned seqs */
+	  ((qlength_max + rlength) * 1)                         +   /* Space to store all the sequences */
+	  1000000;                                                  /* need some smaller emission tables (32 k) and other small stuff */
+  mem = mem/1000000000;  /* in GB */	  
   logv(1, "Expecting a memory consumption of: %f GB (max_memory %f)", mem, (double)parameters.max_memory);
   if (mem > (double)parameters.max_memory) {
     die("The memory consumption is limited to %1.4f GB by default. Your attempt requires %1.4f GB. You can change the limit via --max-memory.", (double)parameters.max_memory, mem);
   } else {
     logv(1, "Expecting a memory consumption of: %1.4f GB", mem);
   }
+
 
   if (g_loglevel >= 7) {
     char* tmp;

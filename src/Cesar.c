@@ -112,7 +112,7 @@ int main(int argc, char* argv[argc]) {
 
     logv(1, "Reference %u length: %lu", i, fasta.references[i]->length);
     logv(1, "Reference %u split codon lengths: %u %u", i, fasta.references[i]->start_split_length, fasta.references[i]->end_split_length);
-    rlength += 11 + 6 * fasta.references[i]->length + donors[i]->length + acceptors[i]->length;
+    rlength += fasta.references[i]->length;
   }
   for (uint8_t i=0; i < fasta.num_queries; i++) {
     logv(1, "Query %u length: %lu", i, fasta.queries[i]->length);

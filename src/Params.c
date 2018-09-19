@@ -63,13 +63,13 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
 
   //strncpy(self->blosum_file, "blosum_freq62", PATH_STRING_LENGTH-1);
 
-  strncpy(self->eth_file, "extra/tables/%s/eth_codon_sub.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->acc_profile, "extra/tables/%s/acc_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->first_codon_profile, "extra/tables/%s/firstCodon_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->do_profile, "extra/tables/%s/do_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->last_codon_profile, "extra/tables/%s/lastCodon_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->u12_acc_profile, "extra/tables/%s/u12_acc_profile.txt", PATH_STRING_LENGTH-1);
-  strncpy(self->u12_donor_profile, "extra/tables/%s/u12_donor_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->eth_file, "%s/extra/tables/%s/eth_codon_sub.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->acc_profile, "%s/extra/tables/%s/acc_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->first_codon_profile, "%s/extra/tables/%s/firstCodon_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->do_profile, "%s/extra/tables/%s/do_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->last_codon_profile, "%s/extra/tables/%s/lastCodon_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->u12_acc_profile, "%s/extra/tables/%s/u12_acc_profile.txt", PATH_STRING_LENGTH-1);
+  strncpy(self->u12_donor_profile, "%s/extra/tables/%s/u12_donor_profile.txt", PATH_STRING_LENGTH-1);
 
   EmissionTable__init(self->emission_table_4_UNIFORM,  1, UNIFORM_DISTRIBUTION);
   EmissionTable__init(self->emission_table_16_UNIFORM, 2, UNIFORM_DISTRIBUTION);
@@ -149,24 +149,24 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
 }
 
 
-bool Params__set_paths(struct Params* self) {
+bool Params__set_paths(struct Params* self, char *BaseDir) {
   char tmp[PATH_STRING_LENGTH];
-  sprintf(tmp, self->eth_file,            self->clade);
+  sprintf(tmp, self->eth_file,            BaseDir, self->clade);
   strncpy(self->eth_file, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->acc_profile,         self->clade);
+  sprintf(tmp, self->acc_profile,         BaseDir, self->clade);
   strncpy(self->acc_profile, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->first_codon_profile, self->clade);
+  sprintf(tmp, self->first_codon_profile, BaseDir, self->clade);
   strncpy(self->first_codon_profile, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->do_profile,          self->clade);
+  sprintf(tmp, self->do_profile,          BaseDir, self->clade);
   strncpy(self->do_profile, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->last_codon_profile,  self->clade);
+  sprintf(tmp, self->last_codon_profile,  BaseDir, self->clade);
   strncpy(self->last_codon_profile, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->u12_acc_profile,     self->clade);
+  sprintf(tmp, self->u12_acc_profile,     BaseDir, self->clade);
   strncpy(self->u12_acc_profile, tmp, PATH_STRING_LENGTH);
-  sprintf(tmp, self->u12_donor_profile,   self->clade);
+  sprintf(tmp, self->u12_donor_profile,   BaseDir, self->clade);
   strncpy(self->u12_donor_profile, tmp, PATH_STRING_LENGTH);
 
-  /*
+  
   logv(1, "fasta_file:\t%s",          self->fasta_file);
   logv(1, "eth_file:\t%s",            self->eth_file);
   logv(1, "acc_profile:\t%s",         self->acc_profile);
@@ -175,7 +175,7 @@ bool Params__set_paths(struct Params* self) {
   logv(1, "last_codon_profile:\t%s",  self->last_codon_profile);
   logv(1, "u12_acc_profile:\t%s",     self->u12_acc_profile);
   logv(1, "u12_donor_profile:\t%s",   self->u12_donor_profile);
-  */
+
 
   return true;
 }

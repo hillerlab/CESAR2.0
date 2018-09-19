@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #include "Fasta.h"
 #include "Profile.h"
@@ -35,7 +36,10 @@ int main(int argc, char* argv[argc]) {
     return 1;
   }
 
-  Params__set_paths(&parameters);
+  char BaseDir[PATH_STRING_LENGTH];
+  snprintf(BaseDir, PATH_STRING_LENGTH-1, "%s", dirname(argv[0]));
+  logv(1, "baseDir: %s\n", BaseDir);
+  Params__set_paths(&parameters, BaseDir);
 
   struct Fasta fasta;
   Fasta__init(&fasta);
@@ -44,7 +48,9 @@ int main(int argc, char* argv[argc]) {
   struct Profile** acceptors = SAFEMALLOC(sizeof(Profile*) * fasta.num_references);
   struct Profile** donors = SAFEMALLOC(sizeof(Profile*) * fasta.num_references);
 
-  char prefix[PATH_STRING_LENGTH] = "extra/tables/";
+  char prefix[PATH_STRING_LENGTH];
+  snprintf(prefix, PATH_STRING_LENGTH-1, "%s/extra/tables/", BaseDir);
+  logv(1, "prefix %s\n", prefix);
 
   for (uint8_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];

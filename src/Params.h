@@ -16,7 +16,7 @@
 #include "EmissionTable.h"
 #include "Sequence.h"
 
-#define PATH_STRING_LENGTH 255
+#define PATH_STRING_LENGTH 1024
 #define NUM_CS_DELETIONS 10
 
 typedef struct Params {
@@ -123,7 +123,7 @@ typedef struct Params {
 bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]);
 void Params__destroy(struct Params* self);
 bool Params__recalculate(struct Params* self);
-bool Params__set_paths(struct Params* self);
+bool Params__set_paths(struct Params* self, char *BaseDir);
 bool Params__set_via_str(struct Params* self, char* string, char* value);
 
 #endif  // PARAM_CONTAINER_H_

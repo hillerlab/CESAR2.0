@@ -135,7 +135,8 @@ int main(int argc, char* argv[argc]) {
 	  ((2 * qlength_max + rlength) * sizeof(struct State*)) +   /* Space for Viterbi path, 8 bytes for a pointer on a 64 bit system */
 	  ((qlength_max + rlength) * 2 * sizeof(char))          +   /* Space for the aligned seqs */
 	  ((qlength_max + rlength) * 1)                         +   /* Space to store all the sequences */
-	  1000000;                                                  /* need some smaller emission tables (32 k) and other small stuff */
+	  3000000;                                                  /* need some smaller emission tables (32 k) and other small stuff. 
+                                                                       Tests have shown that we may underestimate the real memory by up to 2 Mb. Therefore, be conservative. */
   mem = mem/1000000000;  /* in GB */	  
   logv(1, "Expecting a memory consumption of: %f GB (max_memory %f)", mem, (double)parameters.max_memory);
   if (mem > (double)parameters.max_memory) {

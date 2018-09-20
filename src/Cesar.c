@@ -52,45 +52,93 @@ int main(int argc, char* argv[argc]) {
   snprintf(prefix, PATH_STRING_LENGTH-1, "%s/extra/tables/", BaseDir);
   logv(1, "prefix %s\n", prefix);
 
+  /* load profiles for each reference exon */
   for (uint8_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];
 
-    if (reference->acceptor[0] != '\0') {
+    /* load acceptor or first codon profile */
+    if (reference->acceptor[0] != '\0') {      /* filename is given in the input file */
       char name[STATE_NAME_LENGTH];
       sprintf(name, "ref%iacc", i);
       acceptors[i] = Profile__create(name);
-      char path[PROFILE_FILENAME_LENGTH];
-      sprintf(path, "%s%s/%s", prefix, parameters.clade, reference->acceptor);
-      if (access(path, R_OK) != -1) {
-        Profile__read(acceptors[i], path);
-      } else {
+
+      char fileInsideBinaryLocation[PROFILE_FILENAME_LENGTH];
+      sprintf(fileInsideBinaryLocation, "%s%s/%s", prefix, parameters.clade, reference->acceptor);
+      char pathInsideBinaryLocation[PROFILE_FILENAME_LENGTH];
+      sprintf(pathInsideBinaryLocation, "%s/%s", BaseDir, reference->acceptor);
+		logv(1,"file InsideBin %s pathInsideBin %s\n", fileInsideBinaryLocation, pathInsideBinaryLocation);
+
+      /* test whether an absolute or relative path is given. In case of a relative path, test either local directory or the location of the binary */
+      if (reference->acceptor[0] == '/') {
         Profile__read(acceptors[i], reference->acceptor);
-      }
+        logv(1,"read acceptor profile for reference exon %d %s (absolute path)\n", i+1, reference->acceptor);
+      }else{
+        /* file inside the path where the binary is located in subdir extra/tables/clade/ */
+        if (access(fileInsideBinaryLocation, R_OK) != -1) {
+          Profile__read(acceptors[i], fileInsideBinaryLocation);
+          logv(1,"read acceptor profile for reference exon %d %s (filename given)\n", i+1, fileInsideBinaryLocation);
+        /* relative path inside the path where the binary is located */
+        } else if (access(pathInsideBinaryLocation, R_OK) != -1) {
+          Profile__read(acceptors[i], pathInsideBinaryLocation);
+          logv(1,"read acceptor profile for reference exon %d %s (relative path given)\n", i+1, pathInsideBinaryLocation);
+        } else {
+		    die ("ERROR in reading the acceptor profile of exon %d: %s\n\
+			   Four options:\n\
+				1) Specify an absolute path\n\
+				2) Specify just the filename. Then CESAR expects to find this profile in the dir where the CESAR binary is located in a subdirectory extra/tables/%s\n\
+				3) Specify a relative path inside the dir where the CESAR binary is located\n", i+1, reference->acceptor, parameters.clade);
+		  }
+		}
     } else {
       if (fasta.num_references > 1) {
         warn("Missing acceptor profile for reference %u.", i);
       }
       acceptors[i] = Profile__create("acceptor");
+
 		/* only read the default extra/tables/{clade}/firstCodon_profile.txt if -p {acc_profile} {do_profile} is not given (flag parameters.accSpecified) */
       if (i == 0 && !parameters.acc_do_specified && ((parameters.firstexon && fasta.num_references == 1) || (!parameters.firstexon && fasta.num_references > 1))) {
         Profile__read(acceptors[i], parameters.first_codon_profile);
+        logv(1,"read acceptor profile for reference exon %d %s\n", i+1, parameters.first_codon_profile);
       } else {
         Profile__read(acceptors[i], parameters.acc_profile);
+        logv(1,"read acceptor profile for reference exon %d %s\n", i+1, parameters.acc_profile);
       }
     }
     logv(1, "Reference %u uses acceptor:\t%s", i, acceptors[i]->filename);
 
-    if (reference->acceptor[0] != '\0') {
+    /* load donor or last codon profile */
+    if (reference->acceptor[0] != '\0') {        /* filename is given in the input file */
       char name[STATE_NAME_LENGTH];
       sprintf(name, "ref%idon", i);
       donors[i] = Profile__create(name);
-      char path[PROFILE_FILENAME_LENGTH];
-      sprintf(path, "%s%s/%s", prefix, parameters.clade, reference->donor);
-      if (access(path, R_OK) != -1) {
-        Profile__read(donors[i], path);
-      } else {
+
+      char fileInsideBinaryLocation[PROFILE_FILENAME_LENGTH];
+      sprintf(fileInsideBinaryLocation, "%s%s/%s", prefix, parameters.clade, reference->donor);
+      char pathInsideBinaryLocation[PROFILE_FILENAME_LENGTH];
+      sprintf(pathInsideBinaryLocation, "%s/%s", BaseDir, reference->donor);
+		logv(1,"file InsideBin %s pathInsideBin %s\n", fileInsideBinaryLocation, pathInsideBinaryLocation);
+
+      /* test whether an absolute or relative path is given. In case of a relative path, test either local directory or the location of the binary */
+      if (reference->donor[0] == '/') {
         Profile__read(donors[i], reference->donor);
-      }
+        logv(1,"read donor profile for reference exon %d %s (absolute path)\n", i+1, reference->donor);
+      }else{
+        /* file inside the path where the binary is located in subdir extra/tables/clade/ */
+        if (access(fileInsideBinaryLocation, R_OK) != -1) {
+          Profile__read(donors[i], fileInsideBinaryLocation);
+          logv(1,"read donor profile for reference exon %d %s (filename given)\n", i+1, fileInsideBinaryLocation);
+        /* relative path inside the path where the binary is located */
+        } else if (access(pathInsideBinaryLocation, R_OK) != -1) {
+          Profile__read(donors[i], pathInsideBinaryLocation);
+          logv(1,"read donor profile for reference exon %d %s (relative path given)\n", i+1, pathInsideBinaryLocation);
+        } else {
+		    die ("ERROR in reading the donor profile of exon %d: %s\n\
+			   Four options:\n\
+				1) Specify an absolute path\n\
+				2) Specify just the filename. Then CESAR expects to find this profile in the dir where the CESAR binary is located in a subdirectory extra/tables/%s\n\
+				3) Specify a relative path inside the dir where the CESAR binary is located\n", i+1, reference->donor, parameters.clade);
+		  }
+		}
     } else {
       if (fasta.num_references > 1) {
         warn("Missing donor profile for reference %u.", i);
@@ -99,13 +147,14 @@ int main(int argc, char* argv[argc]) {
 		/* only read the default extra/tables/{clade}/firstCodon_profile.txt if -p {acc_profile} {do_profile} is not given (flag parameters.doSpecified) */
       if (i == fasta.num_references-1 && !parameters.acc_do_specified && ((parameters.lastexon && fasta.num_references == 1) || (!parameters.lastexon && fasta.num_references > 1))) {
         Profile__read(donors[i], parameters.last_codon_profile);
+        logv(1,"read donor profile for reference exon %d %s\n", i+1, parameters.last_codon_profile);
       } else {
         Profile__read(donors[i], parameters.do_profile);
+        logv(1,"read donor profile for reference exon %d %s\n", i+1, parameters.do_profile);
       }
     }
     logv(1, "Reference %u uses donor:\t%s", i, donors[i]->filename);
   }
-
 
   /* estimate memory consumption */
   size_t num_states = 0;

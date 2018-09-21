@@ -207,7 +207,13 @@ CTCCAAGGTTACCATCATCGGCTACACACTAGGGATCCCTGATGTCATCATGGGGATCACCTTCCTGGCTGCCGGAACCA
 TCCCAGGTCACGATCATCGGCTACACGCTGGGGATTCCTGACGTCATCATGGGGAGACAAGGTGGGGCCCACGTGGGGAGGGCTGGGAAGGGAAGCCAGGCCTCCCTACTTAGGGGGTAGGGGGAGCTTGCCTGG
 ```
 
-Example 3: Gene mode of CESAR 2.0. Provide an input file that lists multiple consecutive or all exons of a gene. By default, CESAR2 assumes that the first given exon is the first coding exon (start codon .. donor), that the last given exon is the last coding exon (acceptor .. stop codon) and that all exons in-between are internal exons (acceptor .. donor). Alternatively, you can specify first/internal/last coding exon by adding the profiles tab-separated after the sequences. If no profiles are specified, CESAR2 outputs a missing profile warning. Reference exons are separated by a line starting with hashes from one or more query sequences.
+Example 3: Gene mode of CESAR 2.0. Provide an input file that lists multiple consecutive or all exons of a gene. By default, CESAR2 assumes that the first given exon is the first coding exon (start codon .. donor), that the last given exon is the last coding exon (acceptor .. stop codon) and that all exons in-between are internal exons (acceptor .. donor) and reads the profiles from the default location (using the --clade parameter if given). If no profiles are specified, CESAR2 outputs a missing profile warning.
+Alternatively, you can specify first/internal/last coding exon by adding the profiles tab-separated after the sequences with 3 options:
+1) Specify an absolute path with the profile name.
+2) Specify just the profile name. CESAR2 then expects to find this in the default location (using the --clade parameter if given).
+3) Specify a relative path and the profile name. CESAR2 then expects to find this in the default location (where the binary is located). 
+
+Reference exons are separated by a line starting with hashes from one or more query sequences.
 
 NOTE: This format overrides any of the -l/-f/-c/-p parameters that specify profile files below.
 ```

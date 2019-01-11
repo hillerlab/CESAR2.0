@@ -85,9 +85,10 @@ chmod +x jobList
 
 # Convert results into genePred format (excluding 0-bp exons due to complete deletions)
 for species in `echo $querySpecies | sed 's/,/ /g'`; do 
-  echo "bed2GenePred.pl $species $outputDir /dev/stdout | awk '{if ($4 != $5) print $0}' > $resultsDir/$species.gp"
+  echo "bed2GenePred.pl $species $outputDir /dev/stdout | awk '{if (\$4 != \$5) print \$0}' > $resultsDir/$species.gp"
 done > jobListGenePred
 chmod +x jobListGenePred
+mkdir $resultsDir
 ./jobListGenePred
 # This will take ~15 minutes
 
@@ -158,9 +159,10 @@ or run it in parallel by using a compute cluster.
 After each realignment job succeeded, collect the results as a single genePred file for each query species by running: 
 ```
 for species in `echo $querySpecies | sed 's/,/ /g'`; do 
-  echo "bed2GenePred.pl $species $outputDir /dev/stdout | awk '{if ($4 != $5) print $0}' > $resultsDir/$species.gp"
+  echo "bed2GenePred.pl $species $outputDir /dev/stdout | awk '{if (\$4 != \$5) print \$0}' > $resultsDir/$species.gp"
 done > jobListGenePred
 chmod +x jobListGenePred
+mkdir $resultsDir
 ./jobListGenePred
 ```
 

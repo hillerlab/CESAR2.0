@@ -25,10 +25,10 @@ my $genePred = $ARGV[2];
 my %accListHash = my %hashFromFile = ();
 ## Collect all exons of that species and convert it to a 2 dimensional hash, the first dimension is the accession, the second is just a number, the value is the line.
 my $call = "find $dir -type f -path '*/${species}/*' -exec cat {} \\;";
-print "executing  '$call'  ...\n";
+print STDERR "executing  '$call'  ...\n";
 my @results = `$call`;
 die "ERROR: $call failed\n" if ($? != 0 || ${^CHILD_ERROR_NATIVE} != 0);
-print "gives ", $#results+1, " exons\n";
+print STDERR "gives ", $#results+1, " exons\n";
 for (my $i = 0; $i<=$#results; $i++) {
 	my $line = $results[$i];	
 	$line =~s/\s+$//;
@@ -167,7 +167,7 @@ foreach my $acc(@accListAll)
 }
 close FO;
 `rm $tmpBed $tmpBedFile $tmpFileB2L`;
-print "Results for $species are in $genePred\n";
+print STDERR "Results for $species are in $genePred\n";
 
 ### Sub-routines
 

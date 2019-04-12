@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ## Virag Sharma, 2018. MPI-CBG and MPI-PKS.
 ## The CESAR2.0 multi-exon annotation engine

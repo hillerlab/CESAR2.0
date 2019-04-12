@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ### Virag Sharma, 2017 @MPI-CBG and MPI-PKS, Dresden.
 ### This script formats genePred files in such a way that only the coordinates of coding exons are printed to an output file

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ## Virag Sharma, 2017. MPI-CBG and MPI-PKS.
 ## Tool that converts the CESAR2.0 annotated bed file to a genePred file.

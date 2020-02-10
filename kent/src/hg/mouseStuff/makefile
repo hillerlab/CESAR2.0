@@ -40,7 +40,8 @@ UTILS_APPLIST = \
 	pslMrnaCover \
 	chainCleaner \
 	chainBridge \
-	mafSpeciesSubset 
+	mafSpeciesSubset \
+	mafSpeciesList 
 
 # List of directories to build
 USE_DIRS = $(UTILS_APPLIST)

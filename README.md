@@ -19,14 +19,26 @@ To compile a doxygen documentation of this program at `doc/doxygen/index.html`, 
 
 `make doc` 
 
+The complete workflow described below also requires a mafSpeciesSubset binary (UCSC kent source code) to which we added a new -speciesList parameter. In case the precompiled mafSpeciesSubset binary provided in tools/ does not work, compile the provided light-weight Kent (UCSC) source code by doing
+```
+cd kent/src
+make
+cd ../../
+export PATH=`pwd`/kent/bin:`pwd`/tools:$PATH
+```
+
+
 # Mini example of annotating 2 genes in one query genome
 ```
 # get code 
 git clone https://github.com/hillerlab/CESAR2.0/
 cd CESAR2.0/
-export PATH=$PATH:`pwd`/tools
+export PATH=`pwd`/kent/bin:`pwd`/tools:$PATH
 export profilePath=`pwd`
 make
+cd kent/src
+make
+cd ../../
 # this directory contains the mini example input data
 cd extra/miniExample
 
@@ -52,10 +64,12 @@ mkdir CESARTest; cd CESARTest
 # get code and data
 git clone https://github.com/hillerlab/CESAR2.0/
 cd CESAR2.0/
-export PATH=$PATH:`pwd`/tools
+export PATH=`pwd`/kent/bin:`pwd`/tools:$PATH
 export profilePath=`pwd`
 make
-cd ..
+cd kent/src
+make
+cd ../../../
 
 # download the data (7 GB in total)
 wget -r -nH --cut-dirs=2 --reject "index.html*" https://bds.mpi-cbg.de/hillerlab/CESAR2.0_Example .

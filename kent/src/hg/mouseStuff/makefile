@@ -41,7 +41,10 @@ UTILS_APPLIST = \
 	chainCleaner \
 	chainBridge \
 	mafSpeciesSubset \
-	mafSpeciesList 
+	mafSpeciesList \
+	bedSort \
+	twoBitToFa \
+	stringify
 
 # List of directories to build
 USE_DIRS = $(UTILS_APPLIST)

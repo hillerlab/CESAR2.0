@@ -58,8 +58,10 @@ while (my $line=<FI>)
 	die "Incorrent format\n'$line' should have minimum 10 fields, found only $nf\n" if ($nf < 10);
 	
 	my ($isoform,$chr,$strand,$transStart,$transStop,$cdsStart,$cdsStop,$noe,$exon_start,$exon_end) = (split /\t/,$line)[0,1,2,3,4,5,6,7,8,9];
-	next if ($cdsStart == $cdsStop); ## These are not protein-coding genes. For RNA coding genes, cds_start = cds_stop. And we do not process them.
-		
+	if ($cdsStart == $cdsStop) { ## These are not protein-coding genes. For RNA coding genes, cds_start = cds_stop. And we do not process them.
+		print FOE "Non coding RNA gene is excluded (CDS start is the same as CDS stop) --> $line\n";
+		next;	
+	}	
 	$exon_start =~s/,$//;
 	$exon_end =~s/,$//;		
 	my @exon_start = split(",",$exon_start);
@@ -270,5 +272,4 @@ sub getCdsLength
 	
 	return $length;
 }
-
 

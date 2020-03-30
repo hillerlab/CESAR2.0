@@ -36,6 +36,30 @@ if ($longest) {
 	my $call = "genePredSingleCover $fileIn $tmpFile";
 	system($call) == 0 || die "Error running genePredSingleCover\n";
 	$fileRead = $tmpFile;
+	
+	my $ct = 0;
+	open(FI, $fileRead) || die "Error opening the file '$fileRead'\n";
+	while (my $line = <FI>) {
+		$ct++;	
+	}	
+	close FI;
+	
+	if ($ct == 0) {
+		open(FOE,">$excludeFile") || die "Error writing to exclude file '$excludeFile'\n";
+		open(FI, "$fileIn") || die "Error opening input file '$fileIn'\n";
+		while (my $line = <FI>) {
+			$line =~s/\s+$//;
+			next if ($line =~/#/);
+			
+			my ($isoform,$chr,$strand,$transStart,$transStop,$cdsStart,$cdsStop,$noe,$exon_start,$exon_end) = (split /\t/,$line)[0,1,2,3,4,5,6,7,8,9];
+			if ($cdsStart == $cdsStop) { ## These are not protein-coding genes. For RNA coding genes, cds_start = cds_stop. And we do not process them.
+				print FOE "Non coding RNA gene is excluded (CDS start is the same as CDS stop) --> $line\n";
+			}
+		}
+		close FI;
+		close FOE;
+		exit;		
+	}
 }
 
 #### Step 1 --> read the file into array and have only some fields of interest

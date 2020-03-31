@@ -115,7 +115,7 @@ The results are in geneAnnotation/ as one file for each of the 4 query species i
 
 ## Input data
 * a file containing coding genes annotated in the reference genome in UCSC's [genePred format](https://genome.ucsc.edu/FAQ/FAQformat.html#format9). 
-The UCSC genome browser provides gene annotations in genePred format for many species. Alternatively, the tools bedToGenePred or gff3ToGenePred can be used to create genePred from bed or gff format. Use UCSC's genePredCheck to check if your input file is valid. 
+The UCSC genome browser provides gene annotations in genePred format for many species. Alternatively, the tools bedToGenePred or gff3ToGenePred can be used to create genePred from bed or gff format. Use UCSC's genePredCheck to check if your input file is valid. NOTE: Do not use gtfToGenePred but only gff3ToGenePred to convert gff to genePred as the former tool creates genePred entries that apparently lack the CDS annotation, which is strictly necessary for CESAR2. 
 * a "2bit" directory that contains the genomes of the reference and all query species. 
 Each species must have a subdirectory that is identical to the assembly name (e.g. hg38 for human, mm10 for mouse). In this subdirectory, you must have the genome sequence in [2bit format](https://genome.ucsc.edu/goldenpath/help/twoBit.html) and a file called 'chrom.sizes' that contains the size of all scaffolds. This file can be produced by 'twoBitInfo $assembly.2bit chrom.sizes'. 
 * a genome alignment in [maf format](https://genome.ucsc.edu/FAQ/FAQformat.html#format5). Index this maf file by running 'mafIndex $alignment.maf $alignment.bb -chromSizes=/path/to/chrom.sizes/file/for/reference/assembly' to create the index in bigBed format.

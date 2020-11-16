@@ -40,12 +40,12 @@ bool Fasta__init(struct Fasta* self) {
  * @return success boolean.
  */
 bool Fasta__destroy(struct Fasta* self) {
-  for(uint8_t i = 0; i < self->num_references; i++) {
+  for(uint16_t i = 0; i < self->num_references; i++) {
     Sequence__destroy(self->references[i]);
   }
   free(self->references);
 
-  for(uint8_t i = 0; i < self->num_queries; i++) {
+  for(uint16_t i = 0; i < self->num_queries; i++) {
     Sequence__destroy(self->queries[i]);
   }
   free(self->queries);
@@ -103,10 +103,10 @@ bool Fasta__read(struct Fasta* self, char* filename) {
   struct Sequence* sequence = SAFECALLOC(sizeof(Sequence), 1);
   Sequence__init(sequence);
 
-  uint8_t name_length = 0;
-  uint8_t acc_length = 0;
-  uint8_t do_length = 0;
-  uint8_t state = 0;
+  uint16_t name_length = 0;
+  uint16_t acc_length = 0;
+  uint16_t do_length = 0;
+  uint16_t state = 0;
   size_t lineno = 0;
   bool reached_codons = false;
   bool reached_queries = false;

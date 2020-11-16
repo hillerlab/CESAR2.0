@@ -82,7 +82,7 @@ bool EmissionTable__read(struct EmissionTable* self, char* filename) {
       // corresponds to the line number.
       if (i==0) {
         Literal* codon = (Literal*) SAFEMALLOC(sizeof(Literal) * self->num_literals);
-        for (uint8_t j=0; j < self->num_literals; j++) {
+        for (uint16_t j=0; j < self->num_literals; j++) {
           codon[j] = Literal__from_char(token[j]);
         }
 
@@ -121,7 +121,7 @@ bool EmissionTable__set(struct EmissionTable* self, Literal sequence[], LOGODD_T
   bool result = true;
   // for each query, set logodd concerning 
   EMISSION_ID_T row = Literal__uint(self->num_literals, sequence);
-  for (uint8_t column=0; column < pow(4, self->num_literals); column++) {
+  for (uint16_t column=0; column < pow(4, self->num_literals); column++) {
     result &= LogoddMatrix__set(self->values, column, row, logodd);
     if (!result) {
       break;
@@ -143,7 +143,7 @@ bool EmissionTable__forbid(struct EmissionTable* self, Literal sequence[]) {
 /**
  * Recursively check for Ns in query and replace them by A,C,T,G while recording those in visited.
  */
-void EmissionTable__variants(uint8_t num_literals, Literal query[num_literals], uint8_t position, bool visited[]) {
+void EmissionTable__variants(uint16_t num_literals, Literal query[num_literals], uint16_t position, bool visited[]) {
   if (g_loglevel >= 6) {
     char tmp[4] = "";
     Literal__str(num_literals, query, tmp);
@@ -160,7 +160,7 @@ void EmissionTable__variants(uint8_t num_literals, Literal query[num_literals], 
   }
 
   Literal copy[4];
-  for (uint8_t i=0; i < num_literals; i++) {
+  for (uint16_t i=0; i < num_literals; i++) {
     copy[i] = query[i];
   }
 
@@ -178,8 +178,8 @@ void EmissionTable__variants(uint8_t num_literals, Literal query[num_literals], 
  * @return the probability to emit query.
  */
 LOGODD_T EmissionTable__by_literals(struct EmissionTable* self, Literal reference[], Literal query[]) {
-  uint8_t reference_Ns = Literal__Ns(self->num_literals, reference);
-  uint8_t query_Ns = Literal__Ns(self->num_literals, query);
+  uint16_t reference_Ns = Literal__Ns(self->num_literals, reference);
+  uint16_t query_Ns = Literal__Ns(self->num_literals, query);
 
   if (query_Ns == 0 && reference_Ns == 0) {
     EMISSION_ID_T row = Literal__uint(self->num_literals, reference);
@@ -199,7 +199,7 @@ LOGODD_T EmissionTable__by_literals(struct EmissionTable* self, Literal referenc
   bool* visited_reference = (bool*) SAFECALLOC(sizeof(bool), self->values->num_columns);
   EmissionTable__variants(self->num_literals, reference, 0, visited_reference);
 
-  uint8_t reference_visits = 0;
+  uint16_t reference_visits = 0;
   double total_sum = 0;
   for (EMISSION_ID_T row = 0; row < self->values->num_rows; row++) {
 
@@ -211,7 +211,7 @@ LOGODD_T EmissionTable__by_literals(struct EmissionTable* self, Literal referenc
     bool* visited_query = (bool*) SAFECALLOC(sizeof(bool), self->values->num_columns);
     EmissionTable__variants(self->num_literals, query, 0, visited_query);
 
-    uint8_t query_visits = 0;
+    uint16_t query_visits = 0;
     double sum = 0;
     for (EMISSION_ID_T column = 0; column < self->values->num_columns; column++) {
       if (!visited_query[column]) {
@@ -271,14 +271,14 @@ bool EmissionTable__init(struct EmissionTable* self, EMISSION_ID_T num_emissions
  * @param codons an array of a series of codons (e.g. [TAATGATAG] for all stop codons).
  * @return success boolean.
  */
-bool EmissionTable__init_single_codons(struct EmissionTable* self, uint8_t num_codons, Literal codons[num_codons]) {
+bool EmissionTable__init_single_codons(struct EmissionTable* self, uint16_t num_codons, Literal codons[num_codons]) {
   EmissionTable__init(self, 3, LAMBDA_DISTRIBUTION);
   LOGODD_T one_nth = 1.0 - Logodd__log((double) num_codons);
 
-  for(uint8_t i = 0; i < num_codons; i++) {
+  for(uint16_t i = 0; i < num_codons; i++) {
     // for each query, set logodd concerning 
     EMISSION_ID_T row = Literal__uint(self->num_literals, &codons[3*i]);
-    for (uint8_t j = 0; j < num_codons; j++) {
+    for (uint16_t j = 0; j < num_codons; j++) {
       EMISSION_ID_T column = Literal__uint(self->num_literals, &codons[3*j]);
       if (! LogoddMatrix__set(self->values, column, row, one_nth)) {
         return false;
@@ -324,7 +324,7 @@ bool EmissionTable__str(struct EmissionTable* self, char buffer[]) {
 
 bool EmissionTable__emittable(struct EmissionTable* self, EMISSION_ID_T row) {
   bool emittable = false;
-  uint8_t column = 0;
+  uint16_t column = 0;
   while (column < self->values->num_columns && !emittable) {
     emittable = EmissionTable__get(self, column++, row) != LOGODD_NEGINF;
   }

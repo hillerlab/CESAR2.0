@@ -79,10 +79,10 @@ void Literal__str(size_t length, Literal literals[length], char result[length+1]
  * @param array the array of literals.
  * @return an uint8_fastest.
  */
-EMISSION_ID_T Literal__uint(uint8_t length, Literal array[length]) {
+EMISSION_ID_T Literal__uint(uint16_t length, Literal array[length]) {
   EMISSION_ID_T byte = 0;
 
-  for (uint8_t i=0; i < length; i++) {
+  for (uint16_t i=0; i < length; i++) {
     if (array[i] == LITERAL_N) {
       warn("N literal found.");
     }
@@ -100,9 +100,9 @@ EMISSION_ID_T Literal__uint(uint8_t length, Literal array[length]) {
  * @param array an array of Literals.
  * @return the number of N-Literals.
  */
-uint8_t Literal__Ns(uint8_t length, Literal array[length]) {
-  uint8_t count = 0;
-  for (uint8_t i=0; i < length; i++) {
+uint16_t Literal__Ns(uint16_t length, Literal array[length]) {
+  uint16_t count = 0;
+  for (uint16_t i=0; i < length; i++) {
     count += array[i] == LITERAL_N;
   }
   return count;

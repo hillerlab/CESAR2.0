@@ -25,12 +25,12 @@
 bool find_best_deletion(struct State* deletion, struct EmissionTable* emission_table, Literal* reference, Literal* query, char* result) {
 
   double prob=LOGODD_NEGINF, highest_prob=LOGODD_NEGINF;
-  uint_fast8_t best_pos=0, pos=0;
+  uint_fast16_t best_pos=0, pos=0;
   Literal lookup_query[3];
 
   if (deletion->num_emissions == 2) {
     for(; pos < 3; pos++) {
-      for (uint_fast8_t i=0; i < 3; i++) {
+      for (uint_fast16_t i=0; i < 3; i++) {
         if (pos == i) {
           lookup_query[i] = LITERAL_N;
           continue;
@@ -47,7 +47,7 @@ bool find_best_deletion(struct State* deletion, struct EmissionTable* emission_t
       prob = EmissionTable__by_literals(emission_table, reference, lookup_query);
       if (prob >= highest_prob) {
         highest_prob = prob;
-        for (uint_fast8_t j=0; j < 3; j++) {
+        for (uint_fast16_t j=0; j < 3; j++) {
           result[j] = Literal__char(lookup_query[j]);
         }
         result[pos] = '-';
@@ -63,7 +63,7 @@ bool find_best_deletion(struct State* deletion, struct EmissionTable* emission_t
   } else if (deletion->num_emissions == 1) {
     strncpy(result, "---", 3);
     for(; pos < 3; pos++) {
-      for (uint_fast8_t i=0; i < 3; i++) {
+      for (uint_fast16_t i=0; i < 3; i++) {
         if (pos == i) {
           lookup_query[i] = query[0];
         } else {
@@ -97,14 +97,14 @@ bool find_best_deletion(struct State* deletion, struct EmissionTable* emission_t
  * @param path the Viterbi path.
  * @return the alignment.
  */
-struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struct Params* params, size_t path_length, struct State** path) {
-  uint8_t reference_id = 0;
+struct Alignment* Alignment__create(struct Fasta* fasta, uint16_t query_id, struct Params* params, size_t path_length, struct State** path) {
+  uint16_t reference_id = 0;
   const char lower = 'a' - 'A';
   int numAlignedRefChars = 0;		/* for sanity check that the entire reference seq is contained in the alignment */
 
   struct Alignment* self = (struct Alignment*) SAFEMALLOC(sizeof(struct Alignment));
   size_t length = fasta->queries[query_id]->length;
-  for (uint8_t ref_id=0; ref_id < fasta->num_references; ref_id++) {
+  for (uint16_t ref_id=0; ref_id < fasta->num_references; ref_id++) {
     length += fasta->references[ref_id]->length;
   }
   self->reference = (char*) SAFECALLOC(sizeof(char), length+1+20*fasta->num_references);
@@ -114,10 +114,10 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
   char* deletion;
   char bases[4] = "";
 
-  uint_fast8_t pending_deletion=0;
+  uint_fast16_t pending_deletion=0;
   size_t q = 0, r = 0, t = 0;
   for (size_t i=1; i < path_length; i++) {
-    uint8_t j=0, emissions = path[i]->num_emissions;
+    uint16_t j=0, emissions = path[i]->num_emissions;
 
     // deleting 1nt and 2nt will always emit 3 bases/dashes to maintain reading frame intact.
     if (!strncmp("delete_1nt", path[i]->name, 10) || !strncmp("delete_2nt", path[i]->name, 10)) {
@@ -281,7 +281,7 @@ struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struc
 
   /* sanity check that the entire reference seq is contained in the alignment */
   int totalRefLen = 0;
-  for (uint8_t i=0; i < fasta->num_references; i++) {
+  for (uint16_t i=0; i < fasta->num_references; i++) {
       totalRefLen += fasta->references[i]->length;
   }
   if (numAlignedRefChars != totalRefLen) {

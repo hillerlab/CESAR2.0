@@ -22,7 +22,7 @@
  * @param emission_table a pointer to an emission table.
  * @return success boolean.
  */
-bool State__init(struct State* self, char name[STATE_NAME_LENGTH], uint8_t num_emissions, Literal emission_reference[num_emissions], struct EmissionTable* emission_table) {
+bool State__init(struct State* self, char name[STATE_NAME_LENGTH], uint16_t num_emissions, Literal emission_reference[num_emissions], struct EmissionTable* emission_table) {
   logv(5, "State init:\t%s", name);
   strncpy(self->name, name, STATE_NAME_LENGTH-1);
   self->name[STATE_NAME_LENGTH-1] = '\0';
@@ -35,7 +35,7 @@ bool State__init(struct State* self, char name[STATE_NAME_LENGTH], uint8_t num_e
 
   self->num_incoming = 0;
   self->num_emissions = num_emissions;
-  for (uint8_t i=0; i < num_emissions; i++) {
+  for (uint16_t i=0; i < num_emissions; i++) {
     self->reference[i] = emission_reference[i];
   }
   self->emission_table = emission_table;
@@ -44,7 +44,7 @@ bool State__init(struct State* self, char name[STATE_NAME_LENGTH], uint8_t num_e
   // This originally was thought to avoid stop codon emissions.
   /*
   if (num_emissions) {
-    uint8_t reference_id = Literal__uint(num_emissions, emission_reference);
+    uint16_t reference_id = Literal__uint(num_emissions, emission_reference);
     if (!EmissionTable__emittable(emission_table, reference_id)) {
       char tmp[4] = "";
       Literal__str(num_emissions, emission_reference, tmp);
@@ -64,7 +64,7 @@ bool State__init(struct State* self, char name[STATE_NAME_LENGTH], uint8_t num_e
  * @param emission_table the table containing num_emissions entries.
  * @return success boolean.
  */
-bool State__init_uniform(struct State* self, char name[STATE_NAME_LENGTH], uint8_t num_emissions, struct EmissionTable* emission_table) {
+bool State__init_uniform(struct State* self, char name[STATE_NAME_LENGTH], uint16_t num_emissions, struct EmissionTable* emission_table) {
   Literal emission_reference[STATE_MAX_REF_LEN] = { LITERAL_A, LITERAL_A, LITERAL_A };
   return State__init(self, name, num_emissions, emission_reference, emission_table);
 }

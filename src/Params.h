@@ -55,10 +55,10 @@ typedef struct Params {
           split_emissions_donor,
           max_memory;
 
-  uint8_t num_start_codons;
+  uint16_t num_start_codons;
   Literal* start_codons;
 
-  uint8_t num_stop_codons;
+  uint16_t num_stop_codons;
   Literal* stop_codons;
 
   bool multiexon, lastexon, firstexon, forcelong, sanityChecks;

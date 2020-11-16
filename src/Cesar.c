@@ -53,7 +53,7 @@ int main(int argc, char* argv[argc]) {
   logv(1, "prefix %s\n", prefix);
 
   /* load profiles for each reference exon */
-  for (uint8_t i=0; i < fasta.num_references; i++) {
+  for (uint16_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];
 
     /* load acceptor or first codon profile */
@@ -161,7 +161,7 @@ int main(int argc, char* argv[argc]) {
   size_t rlength = 0;
   size_t qlength = 0;
   size_t qlength_max = 0;
-  for (uint8_t i=0; i < fasta.num_references; i++) {
+  for (uint16_t i=0; i < fasta.num_references; i++) {
     struct Sequence* reference = fasta.references[i];
     num_states += 6 + 6 * reference->num_codons + 1 + 2 + 2 + 22 + 6;  /* 22 and 6 for acc and donor states */
 
@@ -169,7 +169,7 @@ int main(int argc, char* argv[argc]) {
     logv(1, "Reference %u split codon lengths: %u %u", i, fasta.references[i]->start_split_length, fasta.references[i]->end_split_length);
     rlength += fasta.references[i]->length;
   }
-  for (uint8_t i=0; i < fasta.num_queries; i++) {
+  for (uint16_t i=0; i < fasta.num_queries; i++) {
     logv(1, "Query %u length: %lu", i, fasta.queries[i]->length);
     qlength += fasta.queries[i]->length;
     if (fasta.queries[i]->length > qlength_max) {
@@ -197,14 +197,14 @@ int main(int argc, char* argv[argc]) {
 
   if (g_loglevel >= 7) {
     char* tmp;
-    for (uint8_t i=0; i < fasta.num_references; i++) {
+    for (uint16_t i=0; i < fasta.num_references; i++) {
       tmp = SAFECALLOC(sizeof(char), SEQUENCENAMELENGTH + fasta.references[i]->length);
       Literal__str(fasta.references[i]->length, fasta.references[i]->sequence, tmp);
       logv(1, ">original %s\n%s", fasta.references[i]->name, tmp);
       free(tmp);
     }
 
-    for (uint8_t i=0; i < fasta.num_queries; i++) {
+    for (uint16_t i=0; i < fasta.num_queries; i++) {
       tmp = SAFECALLOC(sizeof(char), SEQUENCENAMELENGTH + fasta.queries[i]->length);
       Literal__str(fasta.queries[i]->length, fasta.queries[i]->sequence, tmp);
       logv(1, ">original %s\n%s", fasta.queries[i]->name, tmp);
@@ -222,10 +222,10 @@ int main(int argc, char* argv[argc]) {
     fclose(dotfile);
   }
 
-  for (uint8_t q=0; q < fasta.num_queries; q++) {
+  for (uint16_t q=0; q < fasta.num_queries; q++) {
 
     size_t length = 2*fasta.queries[q]->length;
-    for (uint8_t i=0; i < fasta.num_references; i++) {
+    for (uint16_t i=0; i < fasta.num_references; i++) {
       length += fasta.references[i]->length;
     }
 
@@ -246,7 +246,7 @@ int main(int argc, char* argv[argc]) {
   }
 
   HMM__destroy(hmm);
-  for (uint8_t i=0; i<fasta.num_references; i++) {
+  for (uint16_t i=0; i<fasta.num_references; i++) {
     if(acceptors[i] != NULL) {
       Profile__destroy(acceptors[i]);
     }

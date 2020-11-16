@@ -61,7 +61,7 @@ bool Arguments__read(int argc, char** argv, struct Params* parameters) {
     die("Insufficient number of arguments. Please provide at least an input file.");
   }
 
-  uint8_t num_input_files = 0;
+  uint16_t num_input_files = 0;
   int i = 1;  // [0] is the cesar binary itself.
   while (argv[i] && i < argc) {
     char* argument = argv[i];

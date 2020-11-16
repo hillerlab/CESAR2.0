@@ -56,7 +56,7 @@ bool create_profile_chain(struct HMM* hmm, struct Profile* profile, struct State
 
 bool forward_deletions(struct HMM* hmm, struct Params* params, size_t num_codons, struct State** codons) {
   for (size_t i=0; i < num_codons; i++) {
-    for (uint8_t j=0; j < params->num_factors; j++) {
+    for (uint16_t j=0; j < params->num_factors; j++) {
       if (i+j+1 >= num_codons) {
         break;
       }
@@ -83,7 +83,7 @@ bool match_codon(struct HMM* hmm, Params* params, size_t index, Literal codon[3]
   Literal__str(3, codon, codon_str);
 
   if (!last) {
-    for (uint8_t i=0; i < params->num_stop_codons; i++) {
+    for (uint16_t i=0; i < params->num_stop_codons; i++) {
       if (codon[0] == params->stop_codons[i*3] &&
           codon[0+1] == params->stop_codons[i*3+1] &&
           codon[0+2] == params->stop_codons[i*3+2]) {
@@ -176,7 +176,7 @@ bool create_codon_chain(struct HMM* hmm, struct Params* params, size_t* num_codo
 struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profile** acceptors, struct Profile** donors) {
   // read profiles and count states
   size_t num_states = 0;
-  for (uint8_t i=0; i < fasta->num_references; i++) {
+  for (uint16_t i=0; i < fasta->num_references; i++) {
     struct Sequence* reference = fasta->references[i];
 
     num_states += 6 + 6 * reference->num_codons + 1 + 2 + 2;
@@ -188,13 +188,13 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
   struct HMM* hmm = HMM__create(num_states, 3, 3);
   Params__recalculate(params);
 
-  uint8_t num_split_codons = 0;
+  uint16_t num_split_codons = 0;
   struct State** split_codons = (struct State**) SAFEMALLOC(sizeof(struct State*) * fasta->num_references * 2);
   struct State* former_intron = NULL;
   struct State* first_intron = NULL;
 
   logv(1, "There are %i references.", fasta->num_references);
-  for (uint8_t i=0; i < fasta->num_references; i++) {
+  for (uint16_t i=0; i < fasta->num_references; i++) {
     struct Sequence* reference = fasta->references[i];
     bool reference_has_start = false;
     bool reference_has_stop = false;
@@ -213,9 +213,9 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
       //reference_has_start &= params->firstexon;
       bool match = true;
       if (reference_has_start) {
-        for(uint8_t j = 0; j < params->num_start_codons; j++) {
+        for(uint16_t j = 0; j < params->num_start_codons; j++) {
           match = true;
-          for(uint8_t k = 0; k < 3; k++) {
+          for(uint16_t k = 0; k < 3; k++) {
             match &= reference->sequence[k] == params->start_codons[3*j+k];
           }
           if (match) {
@@ -237,9 +237,9 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
       }
       bool match = true;
       if (reference_has_stop) {
-        for(uint8_t j = 0; j < params->num_stop_codons; j++) {
+        for(uint16_t j = 0; j < params->num_stop_codons; j++) {
           match = true;
-          for(uint8_t k = 0; k < 3; k++) {
+          for(uint16_t k = 0; k < 3; k++) {
             logv(1, "reference[%i]->sequence[%i-3-%i] == params->stop-codons[3*%i+%i]: %c == %c", i,
                 reference->num_codon_bases, k, j, k,
                 Literal__char(reference->sequence[reference->start_split_length+reference->end_split_length+reference->num_codon_bases-3+k]),
@@ -335,9 +335,9 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     struct State** codons = (struct State**) SAFEMALLOC(sizeof(struct State*) * (2 + reference->num_codons));
 
     // Iterate over Codons
-    uint8_t start_offset = 0;
+    uint16_t start_offset = 0;
     if (reference_has_start) start_offset = 3;
-    uint8_t stop_offset = 0;
+    uint16_t stop_offset = 0;
     if (reference_has_stop) stop_offset = 3;
 
     create_codon_chain(hmm, params, &num_codons, codons, reference->num_codon_bases-start_offset-stop_offset, &reference->sequence[reference->codons_offset+start_offset], start_first_codon, &end_last_codon);
@@ -440,7 +440,7 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
   } // end for
 
 #if !NONORMALIZE
-  for (uint8_t i=1; i+1 < num_split_codons; i+=2) {
+  for (uint16_t i=1; i+1 < num_split_codons; i+=2) {
     State__add_incoming(split_codons[i],       params->intron_del,     split_codons[i+1]);
     HMM__normalize(hmm, split_codons[i]);
   }

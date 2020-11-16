@@ -17,7 +17,7 @@ typedef struct Alignment {
   char* query;
 } Alignment;
 
-struct Alignment* Alignment__create(struct Fasta* fasta, uint8_t query_id, struct Params* params, size_t path_length, struct State** sequence);
+struct Alignment* Alignment__create(struct Fasta* fasta, uint16_t query_id, struct Params* params, size_t path_length, struct State** sequence);
 bool Alignment__destroy(struct Alignment* self);
 
 #endif  // ALIGNMENT_H_

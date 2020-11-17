@@ -271,7 +271,7 @@ bool EmissionTable__init(struct EmissionTable* self, EMISSION_ID_T num_emissions
  * @param codons an array of a series of codons (e.g. [TAATGATAG] for all stop codons).
  * @return success boolean.
  */
-bool EmissionTable__init_single_codons(struct EmissionTable* self, uint16_t num_codons, Literal codons[num_codons]) {
+bool EmissionTable__init_single_codons(struct EmissionTable* self, EMISSION_ID_T num_codons, Literal codons[num_codons]) {
   EmissionTable__init(self, 3, LAMBDA_DISTRIBUTION);
   LOGODD_T one_nth = 1.0 - Logodd__log((double) num_codons);
 

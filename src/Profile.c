@@ -146,7 +146,7 @@ bool Profile__str(struct Profile* self, char* buffer) {
   char tmp[255] = "";
   sprintf(tmp, "%s(%u)\n", self->name, self->length);
   strcat(buffer, tmp);
-  for (uint8_t t=0; t < self->length; t++) {
+  for (uint16_t t=0; t < self->length; t++) {
     sprintf(tmp, "%i\t", t);
     strcat(buffer, tmp);
     for (Literal l=0; l < LITERAL_N; l++) {

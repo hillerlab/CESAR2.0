@@ -19,7 +19,7 @@ typedef struct Sequence {
   char name[SEQUENCENAMELENGTH],
        acceptor[PROFILE_FILENAME_LENGTH],
        donor[PROFILE_FILENAME_LENGTH];
-  uint8_t start_split_length,
+  uint16_t start_split_length,
           end_split_length;
   size_t num_states,
          codons_offset,

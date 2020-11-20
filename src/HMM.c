@@ -119,13 +119,13 @@ bool HMM__dot(struct HMM* self, FILE * file) {
       fprintf(file, "  %s_"SID" -> %s_"SID" [label=\"%le\"];\n", origin->name, origin->id, state->name, state->id, Logodd__exp(incoming->logodd));
     }
   }
-  for (uint8_t i=0; i < self->num_starts; i++) {
+  for (uint16_t i=0; i < self->num_starts; i++) {
     struct Transition t = self->starts[i];
     struct State* state = &self->states[t.origin];
 
     fprintf(file, "  START -> %s_"SID" [label=\"%le\"];\n", state->name, state->id, Logodd__exp(t.logodd));
   }
-  for (uint8_t i=0; i < self->num_ends; i++) {
+  for (uint16_t i=0; i < self->num_ends; i++) {
     struct Transition t = self->ends[i];
     struct State* state = &self->states[t.origin];
 
@@ -143,7 +143,7 @@ bool HMM__dot(struct HMM* self, FILE * file) {
  */
 bool HMM__normalize(struct HMM* hmm, struct State* left) {
   // gather all outgoing edges that leave the left state
-  uint8_t num_outgoing = 0;
+  uint16_t num_outgoing = 0;
   struct Transition* outgoing[15];
   struct State* rights[15];
 
@@ -169,7 +169,7 @@ bool HMM__normalize(struct HMM* hmm, struct State* left) {
 
   // perform sumexp(outgoings) (This is how yahmm does it.)
   LOGODD_T total = LOGODD_NEGINF;
-  for (uint8_t j=0; j < num_outgoing; j++) {
+  for (uint16_t j=0; j < num_outgoing; j++) {
     struct Transition* transition = outgoing[j];
     total = Logodd__sumexp(total, transition->logodd);
   }
@@ -180,7 +180,7 @@ bool HMM__normalize(struct HMM* hmm, struct State* left) {
   }
 
   // substract log(sumexp) from all outgoing transition log odds
-  for (uint8_t j=0; j < num_outgoing; j++) {
+  for (uint16_t j=0; j < num_outgoing; j++) {
     LOGODD_T old = outgoing[j]->logodd;
     outgoing[j]->logodd = Logodd__add(outgoing[j]->logodd, -total);
     if (rights[j] != NULL) {

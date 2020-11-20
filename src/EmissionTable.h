@@ -16,7 +16,7 @@
 typedef struct EmissionTable {
   LogoddMatrix* values;
   Distribution distribution;
-  uint8_t num_literals;
+  uint16_t num_literals;
 } EmissionTable;
 
 
@@ -27,7 +27,7 @@ bool EmissionTable__init_single_codons(struct EmissionTable* self, EMISSION_ID_T
 bool EmissionTable__destroy(struct EmissionTable* self);
 bool EmissionTable__set(struct EmissionTable* self, Literal sequence[], LOGODD_T logodd);
 bool EmissionTable__forbid(struct EmissionTable* self, Literal sequence[]);
-LOGODD_T EmissionTable__get(struct EmissionTable* self, uint_fast8_t column, uint_fast8_t row);
+LOGODD_T EmissionTable__get(struct EmissionTable* self, uint_fast16_t column, uint_fast16_t row);
 bool EmissionTable__str(struct EmissionTable* self, char buffer[]);
 bool EmissionTable__emittable(struct EmissionTable* self, EMISSION_ID_T reference);
 

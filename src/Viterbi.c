@@ -42,7 +42,7 @@ struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm) {
 struct PathMatrix* Viterbi__init_path_matrix(struct HMM* hmm, size_t num_observations) {
   struct PathMatrix* pmatrix = PathMatrix__create(num_observations + 1, hmm->num_states, STATE_MAX_ID);  // +1 for virtual start state
 
-  for (uint8_t i = 0; i < hmm->num_starts; i++) {
+  for (uint16_t i = 0; i < hmm->num_starts; i++) {
     struct Transition start = hmm->starts[i];
     PathMatrix__set(pmatrix, 0, start.origin, start.origin);
   }
@@ -64,7 +64,7 @@ LOGODD_T Viterbi__get_emission_logodd(Literal* observations, size_t t, struct St
   if (t < state->num_emissions) {
     return LOGODD_NEGINF;
   }
-  for (uint8_t i=0; i < state->num_emissions; i++) {
+  for (uint16_t i=0; i < state->num_emissions; i++) {
     logv(6, "Observation: %lu", t);
     logv(6, "Logodd lookup for: %c [%u]", Literal__char(observations[t-state->num_emissions]), i);
   }
@@ -116,7 +116,7 @@ void Viterbi__step(struct LogoddMatrix* vmatrix, struct PathMatrix* pmatrix, str
     }
   }
 
-  uint8_t silent = 0;
+  uint16_t silent = 0;
   if (t==0) {
     silent = 2;
   }
@@ -332,8 +332,8 @@ void Viterbi(struct HMM* hmm, size_t num_observations, Literal* observations, si
       Literal__str(state->num_emissions, &observations[t-state->num_emissions], qry);
       Literal__str(state->num_emissions, state->reference, ref);
       /*
-      uint8_t qry_id = Literal__uint(state->num_emissions, &observations[t-state->num_emissions]);
-      uint8_t ref_id = Literal__uint(state->num_emissions, state->reference);
+      uint16_t qry_id = Literal__uint(state->num_emissions, &observations[t-state->num_emissions]);
+      uint16_t ref_id = Literal__uint(state->num_emissions, state->reference);
       logv(4,
           "path[%lu] := Pget(%lu, %s="SID") = %s="SID"(%u)\te(qry=%s=%i, ref=%s=%i)=%E\tv=%E",
           i-1,

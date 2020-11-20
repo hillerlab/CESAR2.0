@@ -14,7 +14,7 @@
 typedef struct Profile {
     char name[STATE_NAME_LENGTH];
     char filename[PROFILE_FILENAME_LENGTH];
-    uint8_t length;
+    uint16_t length;
     struct EmissionTable* emission_tables;
 } Profile;
 

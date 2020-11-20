@@ -12,8 +12,8 @@
 #include "Sequence.h"
 
 typedef struct Fasta {
-  uint8_t num_references;
-  uint8_t num_queries;
+  uint16_t num_references;
+  uint16_t num_queries;
   struct Sequence** references;
   struct Sequence** queries;
 } Fasta;

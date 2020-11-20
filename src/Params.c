@@ -97,7 +97,7 @@ bool Params__create(struct Params* self, struct EmissionTable emission_tables[6]
   self->num_factors = 9;
   memcpy(self->multiple_cd_factors, multiple_cd_factors, sizeof(long double) * self->num_factors);
   long double sum_multiple_cd_factors = 0;
-  for (uint8_t i=0; i < self->num_factors; i++) {
+  for (uint16_t i=0; i < self->num_factors; i++) {
     sum_multiple_cd_factors += self->multiple_cd_factors[i];
   }
   
@@ -201,16 +201,16 @@ bool Params__make_insert_table(struct Params* self, struct EmissionTable* table)
 
   // 1. get the total sum of all probabilities
   LOGODD_T scores_sum = LOGODD_NEGINF, stop_codon_sum = LOGODD_NEGINF;
-  for (uint8_t query=0; query < table->values->num_columns; query++) {
-    for (uint8_t reference=0; reference < table->values->num_rows; reference++) {
+  for (uint16_t query=0; query < table->values->num_columns; query++) {
+    for (uint16_t reference=0; reference < table->values->num_rows; reference++) {
       scores_sum = Logodd__sumexp(scores_sum, EmissionTable__get(table, query, reference));
     }
   }
 
   // 2. get the sum of normalized stop codon emission probs
-  for (uint8_t i=0; i < self->num_stop_codons; i++) {
+  for (uint16_t i=0; i < self->num_stop_codons; i++) {
     LOGODD_T sum_raw_insertion_score = LOGODD_NEGINF;
-    for (uint8_t query=0; query < table->values->num_columns; query++) {
+    for (uint16_t query=0; query < table->values->num_columns; query++) {
       sum_raw_insertion_score = Logodd__sumexp(sum_raw_insertion_score, EmissionTable__get(table, query, Literal__uint(3, &self->stop_codons[i*3])));
     }
     stop_codon_sum = Logodd__sumexp(stop_codon_sum, sum_raw_insertion_score);
@@ -219,12 +219,12 @@ bool Params__make_insert_table(struct Params* self, struct EmissionTable* table)
 
   // 3. set (query x reference)
   LOGODD_T fix_factor = stop_codon_sum/1.0;
-  for (uint8_t query=0; query < table->values->num_columns; query++) {
+  for (uint16_t query=0; query < table->values->num_columns; query++) {
 
     // handle stop_codons
     bool is_stop_codon = false;
-    for (uint8_t i=0; i < self->num_stop_codons; i++) {
-      uint8_t stop_codon_id = Literal__uint(3, &self->stop_codons[i*3]);
+    for (uint16_t i=0; i < self->num_stop_codons; i++) {
+      uint16_t stop_codon_id = Literal__uint(3, &self->stop_codons[i*3]);
       is_stop_codon = query == stop_codon_id;
       if (is_stop_codon) {
         LogoddMatrix__set(table->values, query, stop_codon_id, LOGODD_NEGINF);
@@ -237,13 +237,13 @@ bool Params__make_insert_table(struct Params* self, struct EmissionTable* table)
 
     // handle all other
     LOGODD_T sum_raw_insertion_score = LOGODD_NEGINF;
-    for (uint8_t reference=0; reference < table->values->num_rows; reference++) {
+    for (uint16_t reference=0; reference < table->values->num_rows; reference++) {
       sum_raw_insertion_score = Logodd__sumexp(sum_raw_insertion_score, EmissionTable__get(table, query, reference));
     }
 
     double normalized = sum_raw_insertion_score + Logodd__sumexp(0, fix_factor) - scores_sum;
 
-    for (uint8_t reference=0; reference < table->values->num_rows; reference++) {
+    for (uint16_t reference=0; reference < table->values->num_rows; reference++) {
       LogoddMatrix__set(table->values, query, reference, normalized);
     }
   }
@@ -254,7 +254,7 @@ bool Params__make_insert_table(struct Params* self, struct EmissionTable* table)
 
 bool Params__recalculate(struct Params* self) {
   long double sum_multiple_cd_factors = 0;
-  for (uint8_t i=0; i < self->num_factors; i++) {
+  for (uint16_t i=0; i < self->num_factors; i++) {
     sum_multiple_cd_factors += self->multiple_cd_factors[i];
   }
 
@@ -289,12 +289,12 @@ bool Params__recalculate(struct Params* self) {
   self->e1_e2 = Logodd__subexp(0, self->e1_e1);
 
   // assign substitutions to non-/stop codons
-  for (uint8_t this=0; this < self->num_stop_codons; this++) {
-    uint8_t row = Literal__uint(3, &self->stop_codons[this*3]);
+  for (uint16_t this=0; this < self->num_stop_codons; this++) {
+    uint16_t row = Literal__uint(3, &self->stop_codons[this*3]);
 
-    for (uint8_t column=0; column < self->emission_table_61_UNIFORM->values->num_columns; column++) {
+    for (uint16_t column=0; column < self->emission_table_61_UNIFORM->values->num_columns; column++) {
       bool overwrite = true;
-      for (uint8_t other=0; overwrite && other < self->num_stop_codons; other++) {
+      for (uint16_t other=0; overwrite && other < self->num_stop_codons; other++) {
         if (column == Literal__uint(3, &self->stop_codons[other*3])) {
           overwrite = false;
         }

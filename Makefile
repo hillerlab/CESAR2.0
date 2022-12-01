@@ -2,11 +2,11 @@ CC=gcc
 LDLIBS=-lm -lc
 LDFLAGS=${LDLIBS}
 FLAGS_DEBUG=-g -Wall -DDEBUG -DLOGLEVEL=0 -Wextra -Wno-unused-function
-VERSION=-DVERSION="\"$(shell git log -n1 --pretty=format:%h%d) added cd_acc/do\""
+#VERSION=-DVERSION="\"$(shell git log -n1 --pretty=format:%h%d) added cd_acc/do\""
 
 #CFLAGS=-O0 -std=c11 ${VERSION} ${FLAGS_DEBUG}
 #CFLAGS=-O2 -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5 -std=c11 ${VERSION} ${FLAGS_DEBUG}
-CFLAGS=-O3 -std=c11 ${VERSION}
+CFLAGS=-O3 -std=c11
 
 srcfiles=$(wildcard src/*.c)
 objects=$(srcfiles:%.c=%.o)

@@ -179,6 +179,9 @@ bool LogoddMatrix__destroy(LogoddMatrix* self) {
  * @return success boolean.
  */
 bool LogoddMatrix__set(LogoddMatrix* self, size_t column, size_t row, LOGODD_T value) {
+  if (column >= self->num_columns || row >= self->num_rows) {
+    die("Invalid matrix access: %lux%lu[%lu][%lu]", self->num_columns, self->num_rows, column, row);
+  }
 	self->v[self->num_rows * column + row] = value;
   return true;
 }

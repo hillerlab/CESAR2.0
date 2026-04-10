@@ -103,7 +103,16 @@ bool match_codon(struct HMM* hmm, Params* params, size_t index, Literal codon[3]
   State__init(match_codon, "match_codon", 3, codon, params->emission_table_64_LAMBDA);
   logv(4, "Match: %c%c%c", Literal__char(codon[0]), Literal__char(codon[1]), Literal__char(codon[2]));
   match_codon->custom = index;
-  State__init_uniform(insert_codon_codon, "insert_codon_codon", 3, params->emission_table_61_LAMBDA);
+  /* if this is the last codon in the exon, then set uniform (61 codons) emission probabilities for the last insert state 
+     as this would insert intronic codons in case of a splice site shift into the intron.
+     We do the same for the acceptor side. 
+    */
+/*  if (last) {
+     State__init_uniform(insert_codon_codon, "insert_codon_codon", 3, params->emission_table_61_UNIFORM);
+  }else{
+*/
+     State__init_uniform(insert_codon_codon, "insert_codon_codon", 3, params->emission_table_61_LAMBDA);
+//  }
   insert_codon_codon->custom = index;
   State__init_uniform(insert_1nt_codon, "insert_1nt_codon", 1, params->emission_table_4_UNIFORM);
   insert_1nt_codon->custom = index;
@@ -258,6 +267,19 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
       logv(1, "reference[%i] has stop: %s", i, reference_has_stop ? "true" : "false");
     }
 
+    // in single exon mode, we should only assume that the given exon is a first exon, if the users sets the -f parameter
+    // otherwise, don't assume it is a first exon, even if this (internal) exon starts with an ATG
+    // hence, we set reference_has_start to false
+    // same for the last exon
+    if (reference_has_start && fasta->num_references == 1 && params->firstexon == false) {
+       reference_has_start = false;
+       logv(1, "NOTE: single exon mode and -f (first exon) not set: set reference_has_start to false\n");
+    }
+    if (reference_has_stop && fasta->num_references == 1 && params->lastexon == false) {
+       reference_has_stop = false;
+       logv(1, "NOTE: single exon mode and -l (last exon) not set: set reference_has_stop to false\n");
+    }
+
     // intron start
     struct State* intron_start;
     if (former_intron == NULL) {
@@ -309,7 +331,16 @@ struct HMM* multi_exon(struct Params* params, struct Fasta* fasta, struct Profil
     State__add_incoming(insert_1nt_acceptor,   params->nti_nti,    insert_1nt_acceptor);
 
     struct State* insert_codon_acceptor = HMM__new_state(hmm);
-    State__init_uniform(insert_codon_acceptor, "insert_codon_acceptor", 3, params->emission_table_61_LAMBDA);
+    /* this is the codon insertion state between the acceptor (or split codon) and the first match codon 
+       we set its emission probabilities to uniform (61 codons) as this would insert intronic codons in case of a splice site shift 
+    */
+    /*printf("create acc profile for %s\n", acceptors[i]->filename); */
+    if (strstr(acceptors[i]->filename, "equiprobable_acceptor.tsv")) 
+    	/* printf("--> uniform !! \n"); */
+    	State__init_uniform(insert_codon_acceptor, "insert_codon_acceptor", 3, params->emission_table_61_UNIFORM);
+    else
+    	State__init_uniform(insert_codon_acceptor, "insert_codon_acceptor", 3, params->emission_table_61_LAMBDA);
+    
     State__add_incoming(insert_codon_acceptor, params->i3_i1_acc,  insert_codon_acceptor);
 
     struct State* between_split_ins = HMM__new_state(hmm);

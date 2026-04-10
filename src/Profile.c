@@ -27,13 +27,15 @@ bool Profile__read(struct Profile* self, char filename[]) {
   
   bool done = false;
   size_t lineno = 0;
+  size_t num_keys = 0;
+  Literal keys[4];
   while (!done) {
     // fill the line
     char line[LINELENGTH] = "\0";
     for (size_t i=0; i < LINELENGTH; i++) {
       assert(i < LINELENGTH);
 
-      char c = fgetc(file_descriptor);
+      int c = fgetc(file_descriptor);
 
       bool stop = false;
       switch (c) {
@@ -41,13 +43,14 @@ bool Profile__read(struct Profile* self, char filename[]) {
           line[i] = '\0';
           done = true;
           stop = true;
+          break;
         case '\n':
           line[i] = '\0';
           i=0;
           stop = true;
           break;
         default:
-          line[i] = c;
+          line[i] = (char)c;
       }
 
       if (stop) {
@@ -57,7 +60,6 @@ bool Profile__read(struct Profile* self, char filename[]) {
 
     size_t i=0;
     size_t line_offset = 0;
-    Literal keys[4];
     char* token = strtok(line, DELIMITERS);
     struct EmissionTable* etable;
     while (token != NULL) {
@@ -74,13 +76,23 @@ bool Profile__read(struct Profile* self, char filename[]) {
       // the first line looks like `A\tC\tG\tT\n'
       if (lineno == 0) {
         // In a profile, num_literals of each emission_table will be const 1.
+        if (i >= 4) {
+          die("Too many columns in the header");
+        }
         keys[i] = Literal__from_char(token[0]);
-
         token = strtok(NULL, DELIMITERS);
         i++;
+        num_keys++;
         continue;
       }
 
+
+      if (i >= num_keys) {
+          die(
+            "Too many columns in row %lu in file %s; expected %lu columns from the header, got at least %lu)", 
+            lineno, self->filename, num_keys, i
+          );
+      }
 
       if (i == 0) {
         etable = Profile__add_emission(self);

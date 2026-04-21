@@ -13,7 +13,7 @@
 #include "Arguments.h"
 
 #ifndef VERSION
-#define VERSION "0.01 build"
+#define VERSION "1.02 build"
 #endif
 
 /**
@@ -22,6 +22,7 @@
 void print_version() {
   printf("Cesar %s\n"
          "Copyright 2017 MPI-CBG/MPI-PKS Peter Schwede\n"
+	  	 "Credits: Michael Hiller, Bogdan Kirilenko, Yury Malovichko, Alejandro Gonzales-Irribarren"
          "\n"
          "Align a pair of sequences using HMM.\n",
          VERSION);

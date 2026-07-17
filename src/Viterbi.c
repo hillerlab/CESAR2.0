@@ -40,11 +40,14 @@ struct LogoddMatrix* Viterbi__init_logodd_matrix(struct HMM* hmm) {
  * @param num_observations query length
  */
 struct PathMatrix* Viterbi__init_path_matrix(struct HMM* hmm, size_t num_observations) {
-  struct PathMatrix* pmatrix = PathMatrix__create(num_observations + 1, hmm->num_states, STATE_MAX_ID);  // +1 for virtual start state
+  struct PathMatrix* pmatrix = PathMatrix__create(num_observations + 1, hmm->num_states, PATH_EMPTY);  // +1 for virtual start state
 
+  // Start states have no chosen incoming transition; PATH_EMPTY marks them as
+  // terminal for the backtrace (recovered as a self-reference), matching the
+  // former "predecessor == self" convention.
   for (uint16_t i = 0; i < hmm->num_starts; i++) {
     struct Transition start = hmm->starts[i];
-    PathMatrix__set(pmatrix, 0, start.origin, start.origin);
+    PathMatrix__set(pmatrix, 0, start.origin, PATH_EMPTY);
   }
 
   return pmatrix;
@@ -129,6 +132,7 @@ void Viterbi__step(struct LogoddMatrix* vmatrix, struct PathMatrix* pmatrix, str
 
       LOGODD_T max_logodd = LOGODD_NEGINF;
       STATE_ID_T origin_id = STATE_MAX_ID;
+      PATH_ENTRY_T origin_index = PATH_EMPTY;  // index into state->incoming of the winning edge
 
       if (state->num_emissions > t) {
         logv(6, "t=%lu\ti=%s="SID"\tCurrent state emits too much to emit this early:\t%u > %lu", t, state->name, i, state->num_emissions, t);
@@ -192,6 +196,7 @@ void Viterbi__step(struct LogoddMatrix* vmatrix, struct PathMatrix* pmatrix, str
         if (max_logodd < sum) {
           max_logodd = sum;
           origin_id = transition.origin;
+          origin_index = (PATH_ENTRY_T) j;  // remember which incoming edge won
           logv(6, "t=%lu\ti=%s="SID"\tnew max_logodd:\t%E\t"SID, t, state->name, i, max_logodd, origin_id);
         }
 
@@ -218,8 +223,8 @@ void Viterbi__step(struct LogoddMatrix* vmatrix, struct PathMatrix* pmatrix, str
           logv(6, "t=%lu\ti=%s="SID"\tassign v(%lu,%s="SID") = %E := %E", t, state->name, i, t, state->name, state->id, prevv, max_logodd);
         }
         LogoddMatrix__set(vmatrix, t%4, state->id, max_logodd);
-        logv(6, "t=%lu\ti=%s="SID"\tassign p(%lu,%s="SID") := "SID"", t, state->name, i, t, state->name, state->id, origin_id);
-        PathMatrix__set(pmatrix, t, state->id, origin_id);
+        logv(6, "t=%lu\ti=%s="SID"\tassign p(%lu,%s="SID") := "SID" (incoming #%u)", t, state->name, i, t, state->name, state->id, origin_id, (unsigned) origin_index);
+        PathMatrix__set(pmatrix, t, state->id, origin_index);
       }
     }
   }  // hmm->states  O( deg+(k) * S + s*s) (s = silent states in S)
@@ -325,7 +330,13 @@ void Viterbi(struct HMM* hmm, size_t num_observations, Literal* observations, si
   size_t i, t = num_observations;
   for(i=*path_length-1; i > 0; i--) {
     struct State* state = path[i];
-    path[i-1] = &hmm->states[PathMatrix__get(pmatrix, t, state->id)];
+    // Recover the predecessor from the stored incoming-edge index. PATH_EMPTY
+    // means a start/unset cell -> self-reference (terminal), as before packing.
+    PATH_ENTRY_T incoming_index = PathMatrix__get(pmatrix, t, state->id);
+    STATE_ID_T predecessor = (incoming_index == PATH_EMPTY)
+        ? state->id
+        : state->incoming[incoming_index].origin;
+    path[i-1] = &hmm->states[predecessor];
 
     if (g_loglevel >= 4) {
       char qry[4] = "", ref[4] = "";

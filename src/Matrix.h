@@ -12,12 +12,15 @@
 #include "State.h"
 
 typedef uint8_t PATH_ENTRY_T;
-#define PATH_EMPTY UINT8_MAX
+#define PATH_EMPTY UINT8_C(0x0f)
+
+_Static_assert(STATE_MAX_NUM_INCOMING <= PATH_EMPTY,
+    "All incoming transition indices must fit in a packed path entry");
 
 typedef struct PathMatrix {
   size_t num_rows;
   size_t num_columns;
-  PATH_ENTRY_T* v;
+  uint8_t* v;
 } PathMatrix;
 
 struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, PATH_ENTRY_T default_value);

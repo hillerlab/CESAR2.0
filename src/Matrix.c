@@ -27,12 +27,19 @@ struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, PATH_ENTRY_T 
   logv(2, "create(%lux%lu, %u)", columns, rows, (unsigned) default_value);
   PathMatrix* self = (struct PathMatrix*) SAFEMALLOC(sizeof(struct PathMatrix));
 
+  if (default_value > PATH_EMPTY) {
+    die("Invalid packed path value: %u", (unsigned) default_value);
+  }
+
   self->num_rows = rows;
   self->num_columns = columns;
 
-  self->v = (PATH_ENTRY_T*) SAFEMALLOC(sizeof(PATH_ENTRY_T) * rows * columns);
-  for (size_t i=0; i < rows * columns; i++) {
-    self->v[i] = default_value;
+  const size_t num_cells = rows * columns;
+  const size_t num_bytes = (num_cells + 1) / 2;
+  const uint8_t packed_default = default_value | (default_value << 4);
+  self->v = (uint8_t*) SAFEMALLOC(num_bytes);
+  for (size_t i=0; i < num_bytes; i++) {
+    self->v[i] = packed_default;
   }
 
   return self;
@@ -58,7 +65,20 @@ bool PathMatrix__destroy(struct PathMatrix* self) {
  * @return success boolean.
  */
 bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, PATH_ENTRY_T value) {
-  self->v[self->num_rows * column + row] = value;
+  if (column >= self->num_columns || row >= self->num_rows) {
+    die("Invalid matrix access: %lux%lu[%lu][%lu]", self->num_columns, self->num_rows, column, row);
+  }
+  if (value > PATH_EMPTY) {
+    die("Invalid packed path value: %u", (unsigned) value);
+  }
+
+  const size_t cell = self->num_rows * column + row;
+  uint8_t* packed = &self->v[cell / 2];
+  if ((cell & 1) == 0) {
+    *packed = (*packed & UINT8_C(0xf0)) | value;
+  } else {
+    *packed = (*packed & UINT8_C(0x0f)) | (value << 4);
+  }
   return true;
 }
 
@@ -74,7 +94,9 @@ PATH_ENTRY_T PathMatrix__get(struct PathMatrix* self, size_t column, size_t row)
     die("Invalid matrix access: %lux%lu[%lu][%lu]", self->num_columns, self->num_rows, column, row);
   }
 
-  return self->v[self->num_rows * column + row];
+  const size_t cell = self->num_rows * column + row;
+  const uint8_t packed = self->v[cell / 2];
+  return (cell & 1) == 0 ? packed & UINT8_C(0x0f) : packed >> 4;
 }
 
 /**
@@ -130,7 +152,7 @@ bool PathMatrix__str(struct PathMatrix* self, char* buffer) {
  * @return the number of Bytes used by this PathMatrix
  */
 size_t PathMatrix__bytes(struct PathMatrix* self) {
-  return (self->num_rows * self->num_columns * sizeof(PATH_ENTRY_T));
+  return (self->num_rows * self->num_columns + 1) / 2;
 }
 
 

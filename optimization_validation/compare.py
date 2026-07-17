@@ -85,6 +85,7 @@ def pct(ref, new):
 
 def main(argv):
     ref = argv[0] if len(argv) > 0 else os.path.join(SCRIPT_DIR, "reference_cesar_macos")
+    # ref = argv[0] if len(argv) > 0 else os.path.join(SCRIPT_DIR, "reference_cesar_macos")
     new = argv[1] if len(argv) > 1 else os.path.join(ROOT, "cesar")
     inputs = argv[2:] if len(argv) > 2 else sorted(
         glob.glob(os.path.join(ROOT, "extra", "example*.fa")), key=natural_key)

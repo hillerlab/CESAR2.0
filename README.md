@@ -1,11 +1,43 @@
-# CESAR 2.0
+<p align="center">
+  <p align="center">
+    <img width=200 align="center" src="./assets/figures/hillerlab.png" >
+  </p>
+
+  <span>
+    <h1 align="center">
+        CESAR2.0
+    </h1>
+  </span>
+
+  <p align="center">
+    <a href="https://github.com/hillerlab/CESAR2.0" reference="_blank">
+      <img alt="GitHub License" src="https://img.shields.io/github/license/hillerlab/CESAR2.0?color=blue">
+    </a>
+  </p>
+
+  <p align="center">
+    <samp>
+        <span> realign coding exons or genes to DNA sequences using a Hidden Markov Model  </span>
+        <br>
+        <span> The Hiller Lab at the Senckenberg Research Institute </span>
+        <br>
+        <br>
+        <a href="https://academic.oup.com/bioinformatics/article/33/24/3985/4095639?guestAccessKey=eb84d3d0-0aef-484b-baac-e1c205b6c7ba">paper</a> .
+        <a href="https://hillerlab.com/">us</a> 
+    </samp>
+  </p>
+
+</p>
+
+---
 
 CESAR 2.0 (Coding Exon Structure Aware Realigner 2.0) is a method to realign coding exons or genes to DNA sequences using a Hidden Markov Model [1].
 
 Compared to its predecessor [2], CESAR 2.0 is 77X times faster on average (132X times faster for large exons) and requires 30-times less memory. In addition, CESAR 2.0 improves the accuracy of the comparative gene annotation by two new features. First, CESAR 2.0 substantially improves the identification of splice sites that have shifted over a larger distance, which improves the accuracy of detecting the correct exon boundaries. 
 Second, CESAR 2.0 provides a new gene mode that re-aligns entire genes at once. This mode is able to recognize complete intron deletions and will annotate larger joined exons that arose by intron deletion events. 
 
-
+> [!NOTE]
+> We offer a CESAR2.0 container in [ghcr.io/hillerlab/cesar2:latest](https://github.com/hillerlab/containers/pkgs/container/cesar2). Additional images can be found at [containers](https://github.com/hillerlab/containers) and nextflow modules at [core](https://github.com/hillerlab/core).
 
 # Installation
 Just call 

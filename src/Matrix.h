@@ -6,24 +6,30 @@
 #define VMATRIX_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "Logodd.h"
 #include "State.h"
 
+typedef uint8_t PATH_ENTRY_T;
+#define PATH_EMPTY UINT8_C(0x0f)
+
+_Static_assert(STATE_MAX_NUM_INCOMING <= PATH_EMPTY,
+    "All incoming transition indices must fit in a packed path entry");
 
 typedef struct PathMatrix {
   size_t num_rows;
   size_t num_columns;
-  STATE_ID_T* v;
+  uint8_t* v;
 } PathMatrix;
 
-struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, STATE_ID_T default_value);
+struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, PATH_ENTRY_T default_value);
 
 bool PathMatrix__destroy(struct PathMatrix* self);
 
-bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, STATE_ID_T value);
+bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, PATH_ENTRY_T value);
 
-STATE_ID_T PathMatrix__get(struct PathMatrix* self, size_t column, size_t row);
+PATH_ENTRY_T PathMatrix__get(struct PathMatrix* self, size_t column, size_t row);
 
 bool PathMatrix__str(struct PathMatrix* self, char* buffer);
 

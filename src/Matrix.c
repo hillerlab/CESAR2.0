@@ -23,16 +23,23 @@
  * @param default_value value, the matrix will be filled with ab initio.
  * @return pointer to the created matrix.
  */
-struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, STATE_ID_T default_value) {
-  logv(2, "create(%lux%lu, "SID")", columns, rows, default_value);
+struct PathMatrix* PathMatrix__create(size_t columns, size_t rows, PATH_ENTRY_T default_value) {
+  logv(2, "create(%lux%lu, %u)", columns, rows, (unsigned) default_value);
   PathMatrix* self = (struct PathMatrix*) SAFEMALLOC(sizeof(struct PathMatrix));
+
+  if (default_value > PATH_EMPTY) {
+    die("Invalid packed path value: %u", (unsigned) default_value);
+  }
 
   self->num_rows = rows;
   self->num_columns = columns;
 
-  self->v = (STATE_ID_T*) SAFEMALLOC(sizeof(STATE_ID_T) * rows * columns);
-  for (size_t i=0; i < rows * columns; i++) {
-    self->v[i] = default_value;
+  const size_t num_cells = rows * columns;
+  const size_t num_bytes = (num_cells + 1) / 2;
+  const uint8_t packed_default = default_value | (default_value << 4);
+  self->v = (uint8_t*) SAFEMALLOC(num_bytes);
+  for (size_t i=0; i < num_bytes; i++) {
+    self->v[i] = packed_default;
   }
 
   return self;
@@ -57,8 +64,21 @@ bool PathMatrix__destroy(struct PathMatrix* self) {
  * @param value the value that will be written.
  * @return success boolean.
  */
-bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, STATE_ID_T value) {
-  self->v[self->num_rows * column + row] = value;
+bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, PATH_ENTRY_T value) {
+  if (column >= self->num_columns || row >= self->num_rows) {
+    die("Invalid matrix access: %lux%lu[%lu][%lu]", self->num_columns, self->num_rows, column, row);
+  }
+  if (value > PATH_EMPTY) {
+    die("Invalid packed path value: %u", (unsigned) value);
+  }
+
+  const size_t cell = self->num_rows * column + row;
+  uint8_t* packed = &self->v[cell / 2];
+  if ((cell & 1) == 0) {
+    *packed = (*packed & UINT8_C(0xf0)) | value;
+  } else {
+    *packed = (*packed & UINT8_C(0x0f)) | (value << 4);
+  }
   return true;
 }
 
@@ -69,12 +89,14 @@ bool PathMatrix__set(struct PathMatrix* self, size_t column, size_t row, STATE_I
  * @param row the second value of the coordinates.
  * @return the value.
  */
-STATE_ID_T PathMatrix__get(struct PathMatrix* self, size_t column, size_t row) {
+PATH_ENTRY_T PathMatrix__get(struct PathMatrix* self, size_t column, size_t row) {
   if (column >= self->num_columns || row >= self->num_rows) {
     die("Invalid matrix access: %lux%lu[%lu][%lu]", self->num_columns, self->num_rows, column, row);
   }
 
-  return self->v[self->num_rows * column + row];
+  const size_t cell = self->num_rows * column + row;
+  const uint8_t packed = self->v[cell / 2];
+  return (cell & 1) == 0 ? packed & UINT8_C(0x0f) : packed >> 4;
 }
 
 /**
@@ -100,11 +122,11 @@ bool PathMatrix__str(struct PathMatrix* self, char* buffer) {
     */
 
     for (size_t column=0; column < self->num_columns; column++) {
-      STATE_ID_T id = PathMatrix__get(self, column, row);
-      if (id == STATE_MAX_ID) {
+      PATH_ENTRY_T id = PathMatrix__get(self, column, row);
+      if (id == PATH_EMPTY) {
         sprintf(tmp, "NA\t");
       } else {
-        sprintf(tmp, SID"\t", id);
+        sprintf(tmp, "%u\t", (unsigned) id);
       }
       strcat(buffer, tmp);
     }
@@ -130,7 +152,7 @@ bool PathMatrix__str(struct PathMatrix* self, char* buffer) {
  * @return the number of Bytes used by this PathMatrix
  */
 size_t PathMatrix__bytes(struct PathMatrix* self) {
-  return (self->num_rows * self->num_columns * sizeof(STATE_ID_T));
+  return (self->num_rows * self->num_columns + 1) / 2;
 }
 
 

@@ -113,7 +113,7 @@ bool Fasta__read(struct Fasta* self, char* filename) {
 
   // initialize new sequence
   while (1) {
-    char c = fgetc(file_descriptor);
+    int c = fgetc(file_descriptor);
 
     if (c == '\n') {
       lineno++;
@@ -141,6 +141,11 @@ bool Fasta__read(struct Fasta* self, char* filename) {
         break;
 
       case 1:  // reading sequence name
+        if (c == EOF) {
+          sequence->name[name_length] = '\0';
+          die("Unexpected end of file while reading the header of sequence '%s' in %s. "
+              "Header lines must end with a newline.", sequence->name, filename);
+        }
         if (c == '\t') {
           sequence->name[name_length] = '\0';
           state = 11;
@@ -150,6 +155,13 @@ bool Fasta__read(struct Fasta* self, char* filename) {
           sequence->name[name_length] = '\0';
           state = 2;
           break;
+        }
+        if (name_length >= SEQUENCENAMELENGTH - 1) {
+          sequence->name[SEQUENCENAMELENGTH - 1] = '\0';
+          die("Sequence name is too long (>= %d characters) in %s: '%s...'. "
+              "If this header lists profile paths, separate the name and the "
+              "profile paths with TABs (not spaces).",
+              SEQUENCENAMELENGTH, filename, sequence->name);
         }
         sequence->name[name_length++] = c;
         break;
@@ -162,6 +174,19 @@ bool Fasta__read(struct Fasta* self, char* filename) {
           state = 12;
           break;
         }
+        if (c == '\n' || c == EOF) {
+          sequence->acceptor[acc_length] = '\0';
+          die("Malformed header for sequence '%s' in %s: expected two TAB-separated "
+              "profile paths (acceptor and donor) but the line ended after '%s'. "
+              "Hint: separate the sequence name and the profile paths with TABs, not spaces.",
+              sequence->name, filename, sequence->acceptor);
+        }
+        if (acc_length >= PROFILE_FILENAME_LENGTH - 1) {
+          sequence->acceptor[PROFILE_FILENAME_LENGTH - 1] = '\0';
+          die("Acceptor profile path is too long (>= %d characters) for sequence '%s' in %s: '%s...'. "
+              "Hint: header fields must be separated by TABs, not spaces.",
+              PROFILE_FILENAME_LENGTH, sequence->name, filename, sequence->acceptor);
+        }
         sequence->acceptor[acc_length++] = c;
         break;
 
@@ -173,10 +198,25 @@ bool Fasta__read(struct Fasta* self, char* filename) {
           state = 2;
           break;
         }
+        if (c == EOF) {
+          sequence->donor[do_length] = '\0';
+          die("Unexpected end of file while reading the donor profile path for sequence '%s' in %s. "
+              "Header lines must end with a newline.", sequence->name, filename);
+        }
+        if (do_length >= PROFILE_FILENAME_LENGTH - 1) {
+          sequence->donor[PROFILE_FILENAME_LENGTH - 1] = '\0';
+          die("Donor profile path is too long (>= %d characters) for sequence '%s' in %s: '%s...'. "
+              "Hint: header fields must be separated by TABs, not spaces.",
+              PROFILE_FILENAME_LENGTH, sequence->name, filename, sequence->donor);
+        }
         sequence->donor[do_length++] = c;
         break;
 
       case 13:  // between references and query
+        if (c == EOF) {
+          state = 3;
+          break;
+        }
         if (c == '\n') {
           state = 0;
           break;
@@ -184,7 +224,7 @@ bool Fasta__read(struct Fasta* self, char* filename) {
         break;
 
       case 2:  // read sequence
-        if (c == '\n') {
+        if (c == '\n' || c == EOF) {
           state = 0;
 
           if (sequence != NULL) {
@@ -241,7 +281,7 @@ bool Fasta__read(struct Fasta* self, char* filename) {
         break;
 
       case 21:  // full codons following pipes
-        if (c == '\n') {
+        if (c == '\n' || c == EOF) {
           state = 0;
 
           if (sequence != NULL) {
@@ -276,7 +316,7 @@ bool Fasta__read(struct Fasta* self, char* filename) {
         break;
 
       case 22:  // split codon donor end
-        if (c == '\n') {
+        if (c == '\n' || c == EOF) {
           state = 0;
 
           if (sequence != NULL) {

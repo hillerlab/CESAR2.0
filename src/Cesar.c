@@ -179,7 +179,7 @@ int main(int argc, char* argv[argc]) {
 
   double mem = 
      (num_states * 4 * sizeof(double))                     +   /* Viterbi logodds vmatrix, double has typically 8 bytes */
-     (num_states * qlength_max * sizeof(uint32_t))         +   /* Viterbi path matrix, uint32 = 4 bytes*/
+     ((num_states * (qlength_max + 1) + 1) / 2)            +   /* Viterbi path matrix, two 4-bit entries per byte */
      (num_states * sizeof(State))                          +   /* Space for all the state structures, each 304 bytes for a struct State */
 	  ((2 * qlength_max + rlength) * sizeof(struct State*)) +   /* Space for Viterbi path, 8 bytes for a pointer on a 64 bit system */
 	  ((qlength_max + rlength) * 2 * sizeof(char))          +   /* Space for the aligned seqs */
